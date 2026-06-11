@@ -333,6 +333,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <div class="page act" id="p-home">
     <div id="main-match-wrap"></div>
     <div class="sgrid" id="SG"></div>
+    <div id="pred-section"></div>
   </div>
 
   <!-- RANK -->
@@ -720,44 +721,62 @@ async function renderHome() {
       <div class="sc"><div class="sn">${me.predicted}</div><div class="sl">내 예측 수</div></div>
       <div class="sc"><div class="sn">${me.wins}</div><div class="sl">당첨 횟수 🎯</div></div>
       <div class="sc"><div class="sn">${fmt(prizeData.totalPool)}</div><div class="sl">현재 판돈</div></div>
-    ` + (mainMatch && !isAdminUser ? (() => {
-      // 메인 경기 전체 예측 현황
+`;
+
+    // 전체 예측 현황 별도 섹션
+    const predSection = document.getElementById('pred-section');
+    if (predSection && mainMatch && !isAdminUser) {
       const matchPreds = allPreds.filter(p => p.match_id === mainMatch.id);
-      if (!matchPreds.length) return '';
-      const rows = matchPreds.map(p => {
-        const user = allUsers.find(u => u.id === p.user_id);
-        const uname = user ? user.name : '?';
-        const isMe = p.user_id === CU.id;
-        const hasResult = mainMatch.result_home !== null && mainMatch.result_home !== undefined;
-        const won = hasResult && p.pred_home === mainMatch.result_home && p.pred_away === mainMatch.result_away;
-        return `<tr style="${isMe ? 'background:#f0fdf4;font-weight:700;' : ''}">
-          <td style="padding:9px 12px;font-size:13px;border-bottom:1px solid var(--g100);">
-            ${isMe ? '⭐ ' : ''}${uname}
-          </td>
-          <td style="padding:9px 12px;text-align:center;font-size:15px;font-weight:700;letter-spacing:2px;border-bottom:1px solid var(--g100);">
-            ${p.pred_home} - ${p.pred_away}
-          </td>
-          <td style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--g100);">
-            ${hasResult ? (won ? '<span style="color:#065f46;font-weight:700;">🏆 당첨</span>' : '<span style="color:var(--g400);font-size:12px;">✗</span>') : '<span style="color:var(--g400);font-size:12px;">대기중</span>'}
-          </td>
-        </tr>`;
-      }).join('');
-      return `<div class="card" style="margin-bottom:16px;">
-        <div class="ctitle">👀 전체 예측 현황 <span style="font-size:13px;font-weight:400;color:var(--g500);">${matchPreds.length}명 참여</span></div>
-        <div style="overflow-x:auto;">
-          <table style="width:100%;border-collapse:collapse;">
-            <thead>
-              <tr style="background:var(--green-d);">
-                <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;border-radius:8px 0 0 0;">참가자</th>
-                <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;">예측 스코어</th>
-                <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;border-radius:0 8px 0 0;">결과</th>
-              </tr>
-            </thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>
-      </div>`;
-    })() : '') + (isPaid ? '' : `
+      if (!matchPreds.length) {
+        predSection.innerHTML = '';
+      } else {
+        const rows = matchPreds.map((p, idx) => {
+          const user = allUsers.find(u => u.id === p.user_id);
+          const uname = user ? user.name : '?';
+          const isMe = p.user_id === CU.id;
+          const hasResult = mainMatch.result_home !== null && mainMatch.result_home !== undefined;
+          const won = hasResult && p.pred_home === mainMatch.result_home && p.pred_away === mainMatch.result_away;
+          const rank = idx + 1;
+          return `<tr style="${isMe ? 'background:#f0fdf4;font-weight:700;' : (idx % 2 === 1 ? 'background:var(--g50);' : '')}">
+            <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid var(--g100);color:var(--g500);text-align:center;">${rank}</td>
+            <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid var(--g100);">
+              ${isMe ? '⭐ ' : ''}<span style="font-weight:${isMe?'700':'500'};">${uname}</span>
+            </td>
+            <td style="padding:10px 12px;text-align:center;font-size:16px;font-weight:800;letter-spacing:2px;border-bottom:1px solid var(--g100);color:var(--green-d);">
+              ${p.pred_home} - ${p.pred_away}
+            </td>
+            <td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--g100);">
+              ${hasResult
+                ? (won ? '<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;">🏆 당첨</span>'
+                       : '<span style="background:var(--red-l);color:var(--red);padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;">✗ 탈락</span>')
+                : '<span style="color:var(--g400);font-size:12px;">대기중</span>'}
+            </td>
+          </tr>`;
+        }).join('');
+        predSection.innerHTML = `<div class="card" style="margin-bottom:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+            <div class="ctitle" style="margin-bottom:0;">👀 전체 예측 현황 <span style="font-size:13px;font-weight:400;color:var(--g500);">${matchPreds.length}명 참여</span></div>
+            ${matchPreds.length > 10 ? '<button id="pred-toggle" onclick="togglePreds()" style="background:var(--g100);border:none;border-radius:20px;padding:5px 14px;font-size:12px;font-weight:600;color:var(--g700);cursor:pointer;">접기 ▲</button>' : ''}
+          </div>
+          <div id="pred-table-wrap">
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr style="background:var(--green-d);">
+                  <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;border-radius:8px 0 0 0;width:40px;">순위</th>
+                  <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">참가자</th>
+                  <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;">예측 스코어</th>
+                  <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;border-radius:0 8px 0 0;">결과</th>
+                </tr>
+              </thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
+        </div>`;
+      }
+    }
+
+    // 입금 안내 (미납자만)
+    document.getElementById('SG').innerHTML += (isPaid ? '' : `
       <div style="grid-column:1/-1;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--r);padding:16px 18px;">
         <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 안내</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;color:#78350f;margin-bottom:10px;">
@@ -1063,6 +1082,20 @@ function selC(n,f) {
   closeCM();
 }
 document.getElementById('CM').addEventListener('click', e => { if (e.target===document.getElementById('CM')) closeCM(); });
+
+// ===================== PRED TOGGLE =====================
+function togglePreds() {
+  const wrap = document.getElementById('pred-table-wrap');
+  const btn = document.getElementById('pred-toggle');
+  if (!wrap || !btn) return;
+  if (wrap.style.display === 'none') {
+    wrap.style.display = '';
+    btn.textContent = '접기 ▲';
+  } else {
+    wrap.style.display = 'none';
+    btn.textContent = '펼치기 ▼';
+  }
+}
 
 // ===================== COPY =====================
 function copyAccount() {
