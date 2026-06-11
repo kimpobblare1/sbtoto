@@ -625,10 +625,12 @@ function countdown(match) {
 async function renderHome() {
   try {
     const isAdminUser = CU.id === 'admin';
-    const [matches, preds, prizeData] = await Promise.all([
+    const [matches, preds, prizeData, allPreds, allUsers] = await Promise.all([
       dbGet('matches'),
       isAdminUser ? Promise.resolve([]) : dbGet('predictions', { user_id: CU.id }),
-      calcPrize()
+      calcPrize(),
+      dbGet('predictions'),
+      dbGet('users')
     ]);
 
     // 메인 경기: is_main = true 인 것, 없으면 가장 최근 경기
@@ -699,6 +701,10 @@ async function renderHome() {
                  </div>
                  <div style="flex:1;text-align:center;font-size:clamp(12px,3vw,14px);font-weight:600;color:var(--g700);">${mainMatch.away_name}</div>
                </div>
+               <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:9px 12px;margin-bottom:10px;font-size:12px;color:#166534;line-height:1.6;">
+                 📌 경기 시작 전까지 예측을 자유롭게 변경할 수 있습니다.<br>
+                 킥오프 시간이 되면 자동으로 예측이 마감됩니다.
+               </div>
                <button class="pbtn" style="font-size:15px;padding:13px;" onclick="saveMainPred('${mainMatch.id}')">
                  ${pred ? '✓ 저장됨 · 수정하기' : '예측 저장하기 ⚽'}
                </button>
@@ -714,7 +720,44 @@ async function renderHome() {
       <div class="sc"><div class="sn">${me.predicted}</div><div class="sl">내 예측 수</div></div>
       <div class="sc"><div class="sn">${me.wins}</div><div class="sl">당첨 횟수 🎯</div></div>
       <div class="sc"><div class="sn">${fmt(prizeData.totalPool)}</div><div class="sl">현재 판돈</div></div>
-    ` + (isPaid ? '' : `
+    ` + (mainMatch && !isAdminUser ? (() => {
+      // 메인 경기 전체 예측 현황
+      const matchPreds = allPreds.filter(p => p.match_id === mainMatch.id);
+      if (!matchPreds.length) return '';
+      const rows = matchPreds.map(p => {
+        const user = allUsers.find(u => u.id === p.user_id);
+        const uname = user ? user.name : '?';
+        const isMe = p.user_id === CU.id;
+        const hasResult = mainMatch.result_home !== null && mainMatch.result_home !== undefined;
+        const won = hasResult && p.pred_home === mainMatch.result_home && p.pred_away === mainMatch.result_away;
+        return `<tr style="${isMe ? 'background:#f0fdf4;font-weight:700;' : ''}">
+          <td style="padding:9px 12px;font-size:13px;border-bottom:1px solid var(--g100);">
+            ${isMe ? '⭐ ' : ''}${uname}
+          </td>
+          <td style="padding:9px 12px;text-align:center;font-size:15px;font-weight:700;letter-spacing:2px;border-bottom:1px solid var(--g100);">
+            ${p.pred_home} - ${p.pred_away}
+          </td>
+          <td style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--g100);">
+            ${hasResult ? (won ? '<span style="color:#065f46;font-weight:700;">🏆 당첨</span>' : '<span style="color:var(--g400);font-size:12px;">✗</span>') : '<span style="color:var(--g400);font-size:12px;">대기중</span>'}
+          </td>
+        </tr>`;
+      }).join('');
+      return `<div class="card" style="margin-bottom:16px;">
+        <div class="ctitle">👀 전체 예측 현황 <span style="font-size:13px;font-weight:400;color:var(--g500);">${matchPreds.length}명 참여</span></div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="background:var(--green-d);">
+                <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;border-radius:8px 0 0 0;">참가자</th>
+                <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;">예측 스코어</th>
+                <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;border-radius:0 8px 0 0;">결과</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>`;
+    })() : '') + (isPaid ? '' : `
       <div style="grid-column:1/-1;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--r);padding:16px 18px;">
         <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 안내</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;color:#78350f;margin-bottom:10px;">
