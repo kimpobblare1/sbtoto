@@ -742,8 +742,14 @@ async function renderHome() {
             <td style="padding:10px 12px;font-size:13px;border-bottom:1px solid var(--g100);">
               ${isMe ? '⭐ ' : ''}<span style="font-weight:${isMe?'700':'500'};">${uname}</span>
             </td>
-            <td style="padding:10px 12px;text-align:center;font-size:16px;font-weight:800;letter-spacing:2px;border-bottom:1px solid var(--g100);color:var(--green-d);">
-              ${p.pred_home} - ${p.pred_away}
+            <td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--g100);">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <span style="font-size:18px;">${mainMatch.home_flag}</span>
+                <span style="font-size:16px;font-weight:800;color:var(--green-d);letter-spacing:1px;">${p.pred_home}</span>
+                <span style="color:var(--g400);font-weight:600;">-</span>
+                <span style="font-size:16px;font-weight:800;color:var(--green-d);letter-spacing:1px;">${p.pred_away}</span>
+                <span style="font-size:18px;">${mainMatch.away_flag}</span>
+              </span>
             </td>
             <td style="padding:10px 12px;text-align:center;border-bottom:1px solid var(--g100);">
               ${hasResult
@@ -764,7 +770,7 @@ async function renderHome() {
                 <tr style="background:var(--green-d);">
                   <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;border-radius:8px 0 0 0;width:40px;">순위</th>
                   <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;font-weight:600;">참가자</th>
-                  <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;">예측 스코어</th>
+                  <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;">${mainMatch.home_flag} 예측 스코어 ${mainMatch.away_flag}</th>
                   <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;font-weight:600;border-radius:0 8px 0 0;">결과</th>
                 </tr>
               </thead>
