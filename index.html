@@ -353,6 +353,21 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
       <div class="prize-pool" id="PP">-</div>
       <div style="font-size:13px;opacity:.8;" id="PS"></div>
     </div>
+    <div class="card" style="background:#fffbeb;border:1.5px solid #f59e0b;margin-bottom:16px;">
+      <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 계좌</div>
+      <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px;color:#78350f;">
+        <span>은행</span><strong>저축은행</strong>
+        <span>계좌번호</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
+          <button onclick="copyAccount()" style="background:#f59e0b;color:#78350f;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;">복사</button>
+        </div>
+        <span>금액</span><strong>10,000원</strong>
+      </div>
+      <div style="margin-top:10px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
+        ⚠️ 반드시 <strong>실명</strong>으로 입금해주세요. 관리자 확인 후 참가 처리됩니다.
+      </div>
+    </div>
     <div id="WB"></div>
     <div class="card">
       <div class="ctitle">📊 참가자 현황</div>
@@ -704,7 +719,11 @@ async function renderHome() {
         <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 안내</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;color:#78350f;margin-bottom:10px;">
           <span>은행</span><strong>저축은행</strong>
-          <span>계좌번호</span><strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
+          <span>계좌번호</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
+            <button onclick="copyAccount()" style="background:#f59e0b;color:#78350f;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;">복사</button>
+          </div>
           <span>금액</span><strong>10,000원</strong>
         </div>
         <div style="background:#fef3c7;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;">
@@ -1001,6 +1020,23 @@ function selC(n,f) {
   closeCM();
 }
 document.getElementById('CM').addEventListener('click', e => { if (e.target===document.getElementById('CM')) closeCM(); });
+
+// ===================== COPY =====================
+function copyAccount() {
+  const accNum = '65061210138967'; // 하이픈 없는 숫자만
+  navigator.clipboard.writeText(accNum).then(() => {
+    toast('계좌번호 복사됨! 65061210138967', 's');
+  }).catch(() => {
+    // clipboard API 실패시 fallback
+    const el = document.createElement('textarea');
+    el.value = accNum;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+    toast('계좌번호 복사됨! 65061210138967', 's');
+  });
+}
 
 // ===================== TOAST =====================
 function toast(msg, type='') {
