@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⚽ SB토토</title>
+<meta property="og:title" content="⚽ SB토토" />
+<meta property="og:description" content="SB토토 · 2026 FIFA 월드컵 스코어 예측 게임 · 정확한 스코어를 맞히면 상금을 가져가세요!" />
+<meta property="og:image" content="https://kimpobblare1.github.io/sbtoto/thumbnail.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://kimpobblare1.github.io/sbtoto" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://kimpobblare1.github.io/sbtoto/thumbnail.png" />
+<!-- Supabase JS SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --green:#1a3a6b;--green-l:#2a5298;--green-d:#0a1f3d;
+  --gold:#f0b429;--gold-l:#fcd34d;
+  --white:#fff;--g50:#f8fafc;--g100:#f1f5f9;--g200:#e2e8f0;
+  --g300:#cbd5e1;--g400:#94a3b8;--g500:#64748b;--g700:#334155;--g900:#0f172a;
+  --red:#dc2626;--red-l:#fee2e2;--blue:#1d4ed8;--blue-l:#dbeafe;
+  --purple:#7c3aed;--purple-l:#ede9fe;
+  --sh:0 2px 12px rgba(0,0,0,.1);--sh-lg:0 8px 32px rgba(0,0,0,.16);
+  --r:12px;--r-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(135deg,#0a1f3d,#1a3a6b 50%,#0d2a52);min-height:100vh;color:var(--g900);}
+
+.hdr{background:rgba(0,0,0,.28);backdrop-filter:blur(12px);padding:13px 18px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;border-bottom:1px solid rgba(255,255,255,.1);flex-wrap:wrap;gap:8px;}
+.logo{font-size:19px;font-weight:800;color:#fff;display:flex;align-items:center;gap:7px;}
+.nav{display:flex;gap:5px;flex-wrap:wrap;}
+.nbtn{padding:7px 13px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;border-radius:20px;cursor:pointer;font-size:13px;font-weight:500;transition:all .2s;}
+.nbtn:hover,.nbtn.act{background:var(--gold);color:var(--g900);border-color:var(--gold);}
+.ubadge{background:var(--gold);color:var(--g900);padding:5px 11px;border-radius:20px;font-size:12px;font-weight:700;}
+
+.page{display:none;padding:18px;max-width:1080px;margin:0 auto;}
+.page.act{display:block;}
+
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:20px;margin-bottom:16px;}
+.ctitle{font-size:16px;font-weight:700;margin-bottom:13px;display:flex;align-items:center;gap:7px;}
+
+/* LOGIN */
+.lw{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:18px;}
+.lb{background:var(--white);border-radius:20px;box-shadow:var(--sh-lg);padding:40px 34px;width:100%;max-width:390px;text-align:center;}
+.licon{font-size:56px;margin-bottom:12px;}
+.ltitle{font-size:24px;font-weight:800;color:var(--green-d);margin-bottom:4px;}
+.lsub{font-size:13px;color:var(--g500);margin-bottom:26px;}
+.fg{margin-bottom:13px;text-align:left;}
+.flabel{font-size:12px;font-weight:600;color:var(--g700);margin-bottom:4px;display:block;}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-size:14px;outline:none;transition:border-color .2s;}
+.fi:focus{border-color:var(--green);}
+.btn{width:100%;padding:11px;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);font-size:14px;font-weight:700;cursor:pointer;transition:background .2s;margin-top:5px;}
+.btn:hover{background:var(--green-l);}
+.btn-gold{background:var(--gold);color:var(--g900);}
+.btn-gold:hover{background:var(--gold-l);color:var(--g900);}
+.btn-red{background:var(--red);}
+.btn-red:hover{background:#b91c1c;}
+.btn-sm{width:auto;padding:7px 13px;font-size:12px;margin-top:0;}
+.btn-out{background:transparent;border:1.5px solid var(--green);color:var(--green);}
+.btn-out:hover{background:var(--green);color:#fff;}
+.lswitch{margin-top:16px;font-size:13px;color:var(--g500);}
+.lswitch a{color:var(--green);cursor:pointer;font-weight:600;text-decoration:none;}
+
+/* SETUP (Supabase 연결 설정) */
+.setup-box{background:var(--white);border-radius:20px;box-shadow:var(--sh-lg);padding:36px 32px;width:100%;max-width:480px;text-align:left;}
+.setup-title{font-size:20px;font-weight:800;color:var(--green-d);margin-bottom:6px;text-align:center;}
+.setup-sub{font-size:13px;color:var(--g500);margin-bottom:22px;text-align:center;}
+.setup-step{background:var(--g50);border-radius:10px;padding:14px 16px;margin-bottom:12px;font-size:13px;color:var(--g700);}
+.setup-step strong{color:var(--green-d);}
+.setup-step code{background:var(--g200);padding:2px 6px;border-radius:4px;font-family:monospace;font-size:12px;}
+
+/* HOME */
+.hero{background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--r);padding:26px;color:#fff;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.htitle{font-size:22px;font-weight:800;margin-bottom:4px;}
+.hsub{font-size:13px;opacity:.8;}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px;}
+.sc{background:var(--white);border-radius:var(--r);padding:16px;text-align:center;box-shadow:var(--sh);}
+.sn{font-size:28px;font-weight:800;color:var(--green);}
+.sl{font-size:12px;color:var(--g500);margin-top:3px;}
+
+/* PREDICT */
+.tabs{display:flex;gap:4px;margin-bottom:16px;background:rgba(0,0,0,.15);padding:4px;border-radius:10px;}
+.tab{flex:1;padding:8px;text-align:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:rgba(255,255,255,.7);transition:all .2s;border:none;background:none;}
+.tab.act{background:var(--white);color:var(--green-d);font-weight:700;box-shadow:var(--sh);}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:13px;}
+.mc{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);padding:16px;transition:transform .2s,box-shadow .2s;border:2px solid transparent;}
+.mc:hover{transform:translateY(-2px);box-shadow:var(--sh-lg);}
+.mc.won{border-color:var(--gold);background:#fffbeb;}
+.mc.lost{border-color:var(--g200);}
+.mc.predicted{border-color:#86efac;}
+.mmeta{font-size:11px;color:var(--g500);margin-bottom:9px;display:flex;justify-content:space-between;align-items:center;}
+.mteams{display:flex;align-items:center;gap:9px;margin-bottom:13px;}
+.team{flex:1;text-align:center;}
+.tflag{font-size:32px;margin-bottom:3px;}
+.tname{font-size:12px;font-weight:600;color:var(--g700);}
+.mvs{font-size:17px;font-weight:800;color:var(--g300);flex-shrink:0;}
+.sinputs{display:flex;align-items:center;gap:6px;}
+.si{flex:1;text-align:center;padding:9px;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-size:22px;font-weight:700;outline:none;transition:border-color .2s;-moz-appearance:textfield;}
+.si::-webkit-outer-spin-button,.si::-webkit-inner-spin-button{-webkit-appearance:none;}
+.si:focus{border-color:var(--green);}
+.ssep{font-size:15px;font-weight:700;color:var(--g400);}
+.pbtn{width:100%;padding:9px;background:var(--green);color:#fff;border:none;border-radius:var(--r-sm);font-size:13px;font-weight:600;cursor:pointer;margin-top:9px;transition:background .2s;}
+.pbtn:hover{background:var(--green-l);}
+.result-score{text-align:center;font-size:26px;font-weight:800;color:var(--green-d);margin:7px 0 3px;letter-spacing:2px;}
+.won-badge{display:flex;align-items:center;justify-content:center;gap:5px;background:linear-gradient(135deg,#f59e0b,#fcd34d);color:#78350f;padding:9px 14px;border-radius:10px;font-size:14px;font-weight:800;margin-top:7px;}
+.lost-badge{text-align:center;padding:7px;background:var(--g100);border-radius:10px;font-size:12px;color:var(--g500);margin-top:7px;}
+.pending-badge{text-align:center;padding:7px;background:var(--blue-l);border-radius:10px;font-size:12px;color:var(--blue);margin-top:7px;font-weight:600;}
+
+/* PRIZE */
+.prize-hero{background:linear-gradient(135deg,#78350f,#b45309,#d97706);border-radius:var(--r);padding:26px;color:#fff;margin-bottom:16px;text-align:center;}
+.prize-pool{font-size:44px;font-weight:800;margin:7px 0;}
+.winner-card{background:linear-gradient(135deg,#fffbeb,#fef3c7);border:2px solid var(--gold);border-radius:var(--r);padding:18px;text-align:center;margin-bottom:14px;}
+.prize-table{width:100%;border-collapse:collapse;}
+.prize-table th{background:var(--green-d);color:#fff;padding:10px 13px;text-align:left;font-size:12px;font-weight:600;}
+.prize-table td{padding:10px 13px;border-bottom:1px solid var(--g100);font-size:13px;}
+.prize-table tr.wrow td{background:#fffbeb;font-weight:700;}
+.pb{display:inline-block;padding:2px 7px;border-radius:6px;font-size:11px;font-weight:700;}
+.pb-y{background:#d1fae5;color:#065f46;}
+.pb-n{background:var(--red-l);color:var(--red);}
+
+/* RANK */
+.rtable{width:100%;border-collapse:collapse;}
+.rtable th{background:var(--green-d);color:#fff;padding:10px 13px;text-align:left;font-size:12px;font-weight:600;}
+.rtable th:last-child{text-align:right;}
+.rtable td{padding:10px 13px;border-bottom:1px solid var(--g100);font-size:13px;}
+.rtable td:last-child{text-align:right;}
+.rtable tr:hover td{background:var(--g50);}
+.rnum{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+.r1{background:var(--gold);color:var(--g900);}
+.r2{background:#94a3b8;color:#fff;}
+.r3{background:#b45309;color:#fff;}
+.ro{background:var(--g100);color:var(--g700);}
+.myrow td{background:#f0fdf4!important;font-weight:600;}
+
+/* ADMIN */
+.aform{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end;background:var(--g50);padding:16px;border-radius:var(--r);margin-bottom:13px;}
+.vsc{display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--g400);padding-bottom:2px;}
+.ami{display:flex;align-items:center;gap:9px;padding:11px 13px;background:var(--white);border:1px solid var(--g200);border-radius:var(--r-sm);margin-bottom:6px;flex-wrap:wrap;}
+.amt{flex:1;display:flex;align-items:center;gap:6px;font-weight:600;font-size:13px;min-width:160px;}
+.ri{width:40px;text-align:center;padding:5px;border:1.5px solid var(--g200);border-radius:6px;font-size:15px;font-weight:700;-moz-appearance:textfield;}
+.ri::-webkit-outer-spin-button,.ri::-webkit-inner-spin-button{-webkit-appearance:none;}
+.srb{background:var(--green);color:#fff;border:none;border-radius:6px;padding:5px 9px;cursor:pointer;font-size:12px;font-weight:600;}
+.srb:hover{background:var(--green-l);}
+.del{background:var(--red-l);color:var(--red);border:none;border-radius:6px;padding:5px 8px;cursor:pointer;font-size:13px;}
+.del:hover{background:var(--red);color:#fff;}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:999;align-items:center;justify-content:center;}
+.mo.open{display:flex;}
+.mb{background:#fff;border-radius:var(--r);width:90%;max-width:500px;max-height:76vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh-lg);}
+.mh{padding:16px 20px;border-bottom:1px solid var(--g200);display:flex;justify-content:space-between;align-items:center;}
+.mtitle{font-size:16px;font-weight:700;}
+.mclose{cursor:pointer;font-size:21px;color:var(--g500);background:none;border:none;}
+.msearch{padding:12px 20px;border-bottom:1px solid var(--g200);}
+.msearch input{width:100%;padding:8px 11px;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-size:13px;outline:none;}
+.msearch input:focus{border-color:var(--green);}
+.cgrid{padding:13px 20px;overflow-y:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.ci{display:flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--g200);border-radius:var(--r-sm);cursor:pointer;transition:all .15s;font-size:12px;font-weight:500;}
+.ci:hover{background:#f0fdf4;border-color:var(--green);}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--g900);color:#fff;padding:10px 20px;border-radius:22px;font-size:13px;font-weight:500;z-index:9999;transition:transform .3s;pointer-events:none;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+.toast.s{background:var(--green);}
+.toast.e{background:var(--red);}
+
+.empty{text-align:center;padding:44px 18px;color:var(--g500);}
+.eicon{font-size:40px;margin-bottom:9px;}
+.sbadge{display:inline-block;padding:2px 6px;border-radius:5px;font-size:10px;font-weight:700;}
+.sg{background:var(--blue-l);color:var(--blue);}
+.s16{background:var(--purple-l);color:var(--purple);}
+.s8{background:#fef3c7;color:#92400e;}
+.s4{background:var(--red-l);color:var(--red);}
+.sfinal{background:#d1fae5;color:#065f46;}
+.s3rd{background:#fce7f3;color:#9d174d;}
+.spinner{display:inline-block;width:20px;height:20px;border:3px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;margin-right:7px;vertical-align:middle;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading{text-align:center;padding:36px;color:rgba(255,255,255,.7);font-size:14px;}
+.csel{width:100%;padding:9px 11px;border:1.5px solid var(--g200);border-radius:var(--r-sm);font-size:13px;}
+
+/* ===== 태블릿 ===== */
+@media(max-width:768px){
+  .mgrid{grid-template-columns:1fr 1fr;}
+  .sgrid{grid-template-columns:repeat(2,1fr);}
+  .prize-pool{font-size:36px;}
+}
+
+/* ===== 모바일 ===== */
+@media(max-width:600px){
+  /* 헤더 */
+  .hdr{padding:10px 12px;gap:6px;}
+  .logo{font-size:17px;}
+  .nav{gap:4px;}
+  .nbtn{padding:5px 10px;font-size:12px;}
+  .ubadge{padding:4px 9px;font-size:11px;}
+
+  /* 페이지 패딩 */
+  .page{padding:12px;}
+
+  /* 카드 */
+  .card{padding:14px;margin-bottom:12px;}
+  .ctitle{font-size:15px;}
+
+  /* 통계 그리드 */
+  .sgrid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .sc{padding:12px 8px;}
+  .sn{font-size:22px;}
+  .sl{font-size:11px;}
+
+  /* 경기 카드 */
+  .mgrid{grid-template-columns:1fr;}
+  .mc{padding:14px;}
+  .tflag{font-size:28px;}
+  .tname{font-size:11px;}
+  .si{font-size:20px;padding:8px;}
+
+  /* 상금 현황 */
+  .prize-hero{padding:20px 16px;}
+  .prize-pool{font-size:34px;}
+  .prize-table th,.prize-table td{padding:8px 10px;font-size:12px;}
+
+  /* 랭킹 */
+  .rtable th,.rtable td{padding:8px 10px;font-size:12px;}
+  .rnum{width:24px;height:24px;font-size:11px;}
+
+  /* 로그인 박스 */
+  .lb{padding:28px 20px;}
+  .ltitle{font-size:22px;}
+  .licon{font-size:46px;}
+
+  /* 관리자 */
+  .aform{grid-template-columns:1fr;gap:8px;}
+  .ami{flex-wrap:wrap;gap:7px;padding:10px 12px;}
+  .amt{min-width:100%;font-size:12px;}
+  .ri{width:38px;font-size:14px;}
+
+  /* 국가 선택 모달 */
+  .cgrid{grid-template-columns:repeat(2,1fr);gap:5px;padding:10px 14px;}
+  .ci{padding:7px 8px;font-size:11px;}
+  .mb{width:95%;max-height:85vh;}
+
+  /* 탭 */
+  .tabs{padding:3px;}
+  .tab{font-size:12px;padding:7px 6px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ① SETUP: Supabase 연결 설정 화면 -->
+<div id="SETUP" class="lw">
+  <div class="setup-box">
+    <div class="licon" style="text-align:center;">⚽</div>
+    <div class="setup-title">Supabase 연결 설정</div>
+    <div class="setup-sub">처음 한 번만 입력하면 됩니다</div>
+
+    <div class="setup-step">
+      <strong>① supabase.com</strong> 프로젝트 대시보드 접속<br>
+      → 왼쪽 메뉴 <strong>Settings → API Keys</strong> 클릭<br>
+      → <code>Project URL</code> 복사 (위쪽 Connect 버튼 옆 URL)<br>
+      → <strong>Publishable key</strong> 항목의 <code>sb_publishable_...</code> 키 복사
+    </div>
+    <div class="setup-step" style="background:#fef3c7;border-left:3px solid #f59e0b;border-radius:0 8px 8px 0;">
+      💡 <strong>Project URL 찾는 법:</strong> 대시보드 상단 <strong>Connect</strong> 버튼 클릭 → <code>Session pooler</code> 탭 → Host 주소에서<br>
+      <code>https://[프로젝트ID].supabase.co</code> 형태로 입력
+    </div>
+
+    <div class="fg">
+      <label class="flabel">Supabase Project URL</label>
+      <input class="fi" id="SB_URL" type="text" placeholder="https://xxxx.supabase.co" />
+    </div>
+    <div class="fg">
+      <label class="flabel">Publishable key (sb_publishable_... 로 시작)</label>
+      <input class="fi" id="SB_KEY" type="text" placeholder="sb_publishable_..." />
+    </div>
+    <button class="btn" onclick="saveSetup()">연결하고 시작하기 🚀</button>
+    <p style="font-size:11px;color:var(--g400);margin-top:12px;text-align:center;">입력한 값은 이 브라우저에만 저장됩니다</p>
+  </div>
+</div>
+
+<!-- ② LOGIN -->
+<div id="LP" class="lw" style="display:none;">
+  <div class="lb">
+    <div class="licon">🏆</div>
+    <h1 class="ltitle">SB토토</h1>
+    <p class="lsub">2026 FIFA 월드컵 스코어 맞추기</p>
+    <div id="LM">
+      <div class="fg"><label class="flabel">닉네임</label><input class="fi" id="lname" type="text" placeholder="닉네임 입력" /></div>
+      <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="lpw" type="password" placeholder="비밀번호 입력" /></div>
+      <button class="btn" onclick="doLogin()">입장하기 🚀</button>
+      <div class="lswitch">처음이라면? <a onclick="sw('R')">회원가입</a> &nbsp;|&nbsp; <a onclick="sw('A')">관리자</a></div>
+    </div>
+    <div id="RM" style="display:none;">
+      <div class="fg"><label class="flabel">닉네임 <span style="color:var(--g400);font-weight:400;">(랭킹 등에 공개됩니다)</span></label><input class="fi" id="rname" type="text" placeholder="예: 축구왕, 손흥민팬 등" /></div>
+      <div class="fg">
+        <label class="flabel">실명 <span style="color:var(--g400);font-weight:400;">(관리자만 확인)</span></label>
+        <input class="fi" id="rrealname" type="text" placeholder="홍길동" />
+        <div style="margin-top:5px;padding:8px 10px;background:#f0fdf4;border-radius:6px;font-size:11px;color:#166534;">
+          💡 참가비(1만원) 입금 후 관리자가 확인합니다. 다른 참가자에게는 공개되지 않습니다.
+        </div>
+      </div>
+      <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="rpw" type="password" placeholder="비밀번호 설정" /></div>
+      <button class="btn" onclick="doRegister()">가입하고 시작하기 🎉</button>
+      <div class="lswitch"><a onclick="sw('L')">← 로그인으로</a></div>
+    </div>
+    <div id="AM" style="display:none;">
+      <div class="fg"><label class="flabel">관리자 비밀번호</label><input class="fi" id="apw" type="password" placeholder="관리자 비밀번호" /></div>
+      <button class="btn btn-gold" onclick="doAdminLogin()">관리자 입장 🔐</button>
+      <div class="lswitch"><a onclick="sw('L')">← 일반 로그인으로</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ MAIN APP -->
+<div id="APP" style="display:none;">
+  <div class="hdr">
+    <div class="logo" style="font-size:20px;letter-spacing:-0.5px;">🏆 SB<span style="color:var(--gold);">토토</span></div>
+    <div class="nav">
+      <button class="nbtn act" id="n-home" onclick="go('home')">🏠 홈</button>
+      <button class="nbtn" id="n-rank" onclick="go('rank')">🏅 랭킹</button>
+      <button class="nbtn" id="n-prize" onclick="go('prize')">💰 판돈 현황</button>
+      <button class="nbtn" id="n-admin" onclick="go('admin')" style="display:none;">⚙️ 관리자</button>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div class="ubadge" id="UB"></div>
+      <button class="nbtn" onclick="doLogout()" style="font-size:11px;padding:5px 9px;">로그아웃</button>
+    </div>
+  </div>
+
+  <!-- HOME = 메인 예측 화면 -->
+  <div class="page act" id="p-home">
+    <div id="main-match-wrap"></div>
+    <div class="sgrid" id="SG"></div>
+  </div>
+
+  <!-- RANK -->
+  <div class="page" id="p-rank">
+    <div class="card">
+      <div class="ctitle">🏅 SB토토 랭킹</div>
+      <div style="font-size:12px;color:var(--g500);margin-bottom:13px;">정확한 스코어를 맞혀야 당첨! 당첨 횟수가 많을수록 판돈이 많아집니다.</div>
+      <div style="overflow-x:auto;"><table class="rtable"><thead><tr>
+        <th style="width:50px;">순위</th><th>참가자</th><th>예측 수</th><th>당첨 횟수</th><th>예상 상금</th>
+      </tr></thead><tbody id="RB"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- PRIZE -->
+  <div class="page" id="p-prize">
+    <div class="prize-hero">
+      <div style="font-size:13px;opacity:.8;margin-bottom:3px;">현재 판돈</div>
+      <div class="prize-pool" id="PP">-</div>
+      <div style="font-size:13px;opacity:.8;" id="PS"></div>
+    </div>
+    <div id="WB"></div>
+    <div class="card">
+      <div class="ctitle">📊 참가자 현황</div>
+      <div style="overflow-x:auto;"><table class="prize-table"><thead><tr>
+        <th>참가자</th><th>참가비</th><th>예측 수</th><th>당첨 횟수</th><th>예상 상금</th>
+      </tr></thead><tbody id="PB"></tbody></table></div>
+    </div>
+  </div>
+
+  <!-- ADMIN -->
+  <div class="page" id="p-admin">
+    <div class="card">
+      <div class="ctitle">🔧 경기 추가</div>
+      <div class="aform">
+        <div><div class="flabel">홈팀</div><button class="btn btn-out" id="HTB" onclick="openCM('home')" style="width:100%;text-align:left;padding:8px 11px;margin-top:0;">🔍 국가 선택</button></div>
+        <div class="vsc">VS</div>
+        <div><div class="flabel">원정팀</div><button class="btn btn-out" id="ATB" onclick="openCM('away')" style="width:100%;text-align:left;padding:8px 11px;margin-top:0;">🔍 국가 선택</button></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:13px;">
+        <div><div class="flabel">경기 단계</div>
+          <select class="csel" id="MS"><option value="group">조별리그</option><option value="16">16강</option><option value="8">8강</option><option value="4">4강</option><option value="final">결승</option><option value="3rd">3,4위</option></select>
+        </div>
+        <div><div class="flabel">날짜</div><input class="fi" id="MD" type="date" /></div>
+        <div><div class="flabel">시간</div><input class="fi" id="MT" type="time" /></div>
+      </div>
+      <button class="btn btn-sm" onclick="addMatch()">+ 경기 추가</button>
+    </div>
+    <div class="card"><div class="ctitle">📋 경기 목록 &amp; 결과 입력</div><div id="AML"></div></div>
+    <div class="card">
+      <div class="ctitle">💰 참가비 관리</div>
+      <p style="font-size:12px;color:var(--g500);margin-bottom:12px;">저축은행 650-61-21-0138967 · 입금자 실명 확인 후 체크하세요.</p>
+      <div id="UL"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">⚙️ 설정</div>
+      <div class="flabel" style="margin-bottom:6px;">관리자 비밀번호 변경</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;">
+        <input class="fi" id="CAP" type="password" placeholder="현재 비밀번호" style="width:150px;" />
+        <input class="fi" id="NAP" type="password" placeholder="새 비밀번호" style="width:150px;" />
+        <button class="btn btn-sm" onclick="changeAdminPw()">변경</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- COUNTRY MODAL -->
+<div class="mo" id="CM">
+  <div class="mb">
+    <div class="mh"><div class="mtitle">🌍 국가 선택</div><button class="mclose" onclick="closeCM()">✕</button></div>
+    <div class="msearch"><input type="text" placeholder="국가명 검색..." id="CS" oninput="filterC()" /></div>
+    <div class="cgrid" id="CG"></div>
+  </div>
+</div>
+
+<div class="toast" id="T"></div>
+
+<script>
+// ===================== COUNTRIES =====================
+const COUNTRIES=[
+  {n:"대한민국",f:"🇰🇷"},{n:"일본",f:"🇯🇵"},{n:"중국",f:"🇨🇳"},{n:"이란",f:"🇮🇷"},
+  {n:"사우디아라비아",f:"🇸🇦"},{n:"호주",f:"🇦🇺"},{n:"카타르",f:"🇶🇦"},{n:"이라크",f:"🇮🇶"},
+  {n:"요르단",f:"🇯🇴"},{n:"UAE",f:"🇦🇪"},{n:"브라질",f:"🇧🇷"},{n:"아르헨티나",f:"🇦🇷"},
+  {n:"우루과이",f:"🇺🇾"},{n:"콜롬비아",f:"🇨🇴"},{n:"에콰도르",f:"🇪🇨"},{n:"칠레",f:"🇨🇱"},
+  {n:"파라과이",f:"🇵🇾"},{n:"베네수엘라",f:"🇻🇪"},{n:"페루",f:"🇵🇪"},{n:"볼리비아",f:"🇧🇴"},
+  {n:"독일",f:"🇩🇪"},{n:"프랑스",f:"🇫🇷"},{n:"스페인",f:"🇪🇸"},{n:"잉글랜드",f:"🏴󠁧󠁢󠁥󠁮󠁧󠁿"},
+  {n:"이탈리아",f:"🇮🇹"},{n:"포르투갈",f:"🇵🇹"},{n:"네덜란드",f:"🇳🇱"},{n:"벨기에",f:"🇧🇪"},
+  {n:"크로아티아",f:"🇭🇷"},{n:"스위스",f:"🇨🇭"},{n:"덴마크",f:"🇩🇰"},{n:"폴란드",f:"🇵🇱"},
+  {n:"세르비아",f:"🇷🇸"},{n:"헝가리",f:"🇭🇺"},{n:"오스트리아",f:"🇦🇹"},{n:"슬로바키아",f:"🇸🇰"},
+  {n:"체코",f:"🇨🇿"},{n:"스코틀랜드",f:"🏴󠁧󠁢󠁳󠁣󠁴󠁿"},{n:"웨일스",f:"🏴󠁧󠁢󠁷󠁬󠁳󠁿"},{n:"터키",f:"🇹🇷"},
+  {n:"미국",f:"🇺🇸"},{n:"캐나다",f:"🇨🇦"},{n:"멕시코",f:"🇲🇽"},{n:"코스타리카",f:"🇨🇷"},
+  {n:"파나마",f:"🇵🇦"},{n:"자메이카",f:"🇯🇲"},{n:"온두라스",f:"🇭🇳"},{n:"엘살바도르",f:"🇸🇻"},
+  {n:"트리니다드",f:"🇹🇹"},{n:"모로코",f:"🇲🇦"},{n:"세네갈",f:"🇸🇳"},{n:"나이지리아",f:"🇳🇬"},
+  {n:"가나",f:"🇬🇭"},{n:"카메룬",f:"🇨🇲"},{n:"코트디부아르",f:"🇨🇮"},{n:"이집트",f:"🇪🇬"},
+  {n:"알제리",f:"🇩🇿"},{n:"튀니지",f:"🇹🇳"},{n:"남아프리카",f:"🇿🇦"},{n:"케냐",f:"🇰🇪"},
+  {n:"뉴질랜드",f:"🇳🇿"},{n:"인도네시아",f:"🇮🇩"},{n:"태국",f:"🇹🇭"},{n:"우즈베키스탄",f:"🇺🇿"}
+];
+
+// ===================== SUPABASE INIT =====================
+const SUPABASE_URL = 'https://netktxtrqiggzbgulthn.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ldGt0eHRycWlnZ3piZ3VsdGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMDg1MzUsImV4cCI6MjA5NjY4NDUzNX0.QHmNbQ2tCa99PBlbrT7AyAODqtZguLRvSc0p5V8mPps';
+
+let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+document.getElementById('SETUP').style.display = 'none';
+document.getElementById('LP').style.display = '';
+
+// ===================== STATE =====================
+let CU = null, IA = false, SH = null, SA = null, CMT = null, MF = 'open';
+let adminPwCache = 'admin1234';
+
+// ===================== DB HELPERS =====================
+async function dbGet(table, filters = {}) {
+  let q = sb.from(table).select('*');
+  for (const [k, v] of Object.entries(filters)) q = q.eq(k, v);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+async function dbInsert(table, row) {
+  const { data, error } = await sb.from(table).insert(row).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function dbUpdate(table, id, row) {
+  const { data, error } = await sb.from(table).update(row).eq('id', id).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+async function dbDelete(table, id) {
+  const { error } = await sb.from(table).delete().eq('id', id);
+  if (error) throw new Error(error.message);
+}
+
+async function dbUpsert(table, row, conflict) {
+  const { data, error } = await sb.from(table).upsert(row, { onConflict: conflict }).select().single();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// ===================== AUTH =====================
+function sw(m) {
+  ['LM','RM','AM'].forEach(id => document.getElementById(id).style.display = 'none');
+  if (m==='L') document.getElementById('LM').style.display='';
+  if (m==='R') document.getElementById('RM').style.display='';
+  if (m==='A') document.getElementById('AM').style.display='';
+}
+
+async function doLogin() {
+  const name = document.getElementById('lname').value.trim();
+  const pw = document.getElementById('lpw').value;
+  if (!name || !pw) return toast('이름과 비밀번호를 입력하세요', 'e');
+  try {
+    const users = await dbGet('users', { name });
+    const user = users.find(u => u.pw === pw);
+    if (!user) return toast('이름 또는 비밀번호가 틀렸습니다', 'e');
+    enterApp(user, false);
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function doRegister() {
+  const name = document.getElementById('rname').value.trim();
+  const realname = document.getElementById('rrealname').value.trim();
+  const pw = document.getElementById('rpw').value;
+  if (!name || !pw) return toast('닉네임과 비밀번호를 입력하세요', 'e');
+  if (!realname) return toast('실명을 입력해주세요', 'e');
+  if (name.length < 2) return toast('닉네임은 2글자 이상이어야 합니다', 'e');
+  if (realname.length < 2) return toast('실명은 2글자 이상이어야 합니다', 'e');
+  try {
+    const exists = await dbGet('users', { name });
+    if (exists.length > 0) return toast('이미 사용 중인 닉네임입니다', 'e');
+    const user = await dbInsert('users', { name, real_name: realname, pw, entry_fee_paid: false });
+    toast('가입 완료! 환영합니다 🎉', 's');
+    enterApp(user, false);
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function doAdminLogin() {
+  const pw = document.getElementById('apw').value;
+  try {
+    const rows = await dbGet('settings', { key: 'admin_pw' });
+    const realPw = rows[0]?.value || 'admin1234';
+    if (pw !== realPw) return toast('관리자 비밀번호가 틀렸습니다', 'e');
+    adminPwCache = pw;
+    enterApp({ id: 'admin', name: '관리자', entry_fee_paid: false }, true);
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+function enterApp(user, isAdmin) {
+  CU = user; IA = isAdmin;
+  document.getElementById('LP').style.display = 'none';
+  document.getElementById('APP').style.display = '';
+  document.getElementById('UB').textContent = user.name + (isAdmin ? ' 👑' : '');
+  if (isAdmin) document.getElementById('n-admin').style.display = '';
+  go('home');
+}
+
+function doLogout() {
+  CU = null; IA = false;
+  document.getElementById('LP').style.display = '';
+  document.getElementById('APP').style.display = 'none';
+  document.getElementById('n-admin').style.display = 'none';
+  sw('L');
+}
+
+// ===================== NAV =====================
+function go(p) {
+  document.querySelectorAll('.page').forEach(x => x.classList.remove('act'));
+  document.querySelectorAll('.nbtn').forEach(x => x.classList.remove('act'));
+  document.getElementById('p-' + p).classList.add('act');
+  document.getElementById('n-' + p).classList.add('act');
+  if (p==='home') renderHome();
+  if (p==='rank') renderRank();
+  if (p==='prize') renderPrize();
+  if (p==='admin') renderAdmin();
+}
+
+// ===================== PRIZE CALC =====================
+async function calcPrize() {
+  const [users, matches, preds, settings] = await Promise.all([
+    dbGet('users'), dbGet('matches'), dbGet('predictions'), dbGet('settings')
+  ]);
+  const entryFee = 10000;
+  const paidUsers = users.filter(u => u.entry_fee_paid);
+  const totalPool = paidUsers.length * entryFee;
+  const completedMatches = matches.filter(m => m.result_home !== null && m.result_home !== undefined);
+
+  const scores = users.filter(u => u.id !== 'admin').map(u => {
+    const myPreds = preds.filter(p => p.user_id === u.id);
+    let wins = 0;
+    completedMatches.forEach(m => {
+      const pred = myPreds.find(p => p.match_id === m.id);
+      if (pred && pred.pred_home === m.result_home && pred.pred_away === m.result_away) wins++;
+    });
+    return { ...u, wins, predicted: myPreds.length };
+  }).sort((a, b) => b.wins - a.wins || b.predicted - a.predicted);
+
+  const maxWins = scores[0]?.wins || 0;
+  const winners = maxWins > 0 ? scores.filter(s => s.wins === maxWins && s.entry_fee_paid) : [];
+  const prizePerWinner = winners.length > 0 ? Math.floor(totalPool / winners.length) : 0;
+
+  return { scores, totalPool, paidUsers: paidUsers.length, totalUsers: users.length, winners, prizePerWinner, maxWins, completedMatchCount: completedMatches.length, matches, preds };
+}
+
+// ===================== KST 킥오프 마감 체크 =====================
+function isKickedOff(match) {
+  if (!match.match_date || !match.match_time) return false;
+  const kstStr = match.match_date + 'T' + match.match_time + '+09:00';
+  const kickoff = new Date(kstStr);
+  return Date.now() >= kickoff.getTime();
+}
+
+function fmtKST(match) {
+  if (!match.match_date) return '';
+  const d = match.match_date;
+  const t = match.match_time ? match.match_time.slice(0,5) : '';
+  return d.replace(/-/g,'.') + (t ? ' ' + t + ' KST' : '');
+}
+
+function countdown(match) {
+  if (!match.match_date || !match.match_time) return '';
+  const kstStr = match.match_date + 'T' + match.match_time + '+09:00';
+  const diff = new Date(kstStr).getTime() - Date.now();
+  if (diff <= 0) return '';
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h >= 24) return Math.floor(h/24) + '일 후 마감';
+  if (h > 0) return h + '시간 ' + m + '분 후 마감';
+  return m + '분 후 마감';
+}
+
+// ===================== HOME =====================
+async function renderHome() {
+  try {
+    const isAdminUser = CU.id === 'admin';
+    const [matches, preds, prizeData] = await Promise.all([
+      dbGet('matches'),
+      isAdminUser ? Promise.resolve([]) : dbGet('predictions', { user_id: CU.id }),
+      calcPrize()
+    ]);
+
+    // 메인 경기: is_main = true 인 것, 없으면 가장 최근 경기
+    const mainMatch = matches.find(m => m.is_main) || matches.sort((a,b) => (b.created_at||'') > (a.created_at||'') ? 1:-1)[0];
+    const wrap = document.getElementById('main-match-wrap');
+
+    if (!mainMatch) {
+      wrap.innerHTML = `<div class="card" style="text-align:center;padding:50px 20px;">
+        <div style="font-size:48px;margin-bottom:12px;">⚽</div>
+        <div style="font-size:17px;font-weight:700;color:var(--g700);">진행 중인 경기가 없습니다</div>
+        <div style="font-size:13px;color:var(--g500);margin-top:6px;">관리자가 경기를 등록하면 여기에 표시됩니다 · 참가비를 납부하고 예측에 참여하세요!</div>
+      </div>`;
+    } else {
+      const pred = preds.find(p => p.match_id === mainMatch.id);
+      const hasResult = mainMatch.result_home !== null && mainMatch.result_home !== undefined;
+      const kicked = isKickedOff(mainMatch);
+      const locked = hasResult || kicked;
+      const won = hasResult && pred && pred.pred_home === mainMatch.result_home && pred.pred_away === mainMatch.result_away;
+      const cd = countdown(mainMatch);
+      const SL={group:'조별리그',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+      const SC={group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
+
+      wrap.innerHTML = `
+        <div style="background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--r);padding:22px;margin-bottom:16px;color:#fff;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+            <span class="sbadge ${SC[mainMatch.stage]||'sg'}" style="font-size:12px;padding:3px 10px;">${SL[mainMatch.stage]||mainMatch.stage}</span>
+            <span style="font-size:12px;opacity:.75;">${fmtKST(mainMatch)}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-around;padding:20px 0 16px;">
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:clamp(36px,8vw,52px);">${mainMatch.home_flag}</div>
+              <div style="font-size:clamp(13px,3vw,16px);font-weight:700;margin-top:6px;">${mainMatch.home_name}</div>
+            </div>
+            <div style="text-align:center;flex-shrink:0;padding:0 12px;">
+              ${hasResult
+                ? `<div style="font-size:clamp(28px,6vw,42px);font-weight:800;letter-spacing:2px;">${mainMatch.result_home} - ${mainMatch.result_away}</div>
+                   <div style="font-size:11px;opacity:.7;margin-top:4px;">최종 결과</div>`
+                : `<div style="font-size:22px;font-weight:700;opacity:.5;">VS</div>`}
+            </div>
+            <div style="text-align:center;flex:1;">
+              <div style="font-size:clamp(36px,8vw,52px);">${mainMatch.away_flag}</div>
+              <div style="font-size:clamp(13px,3vw,16px);font-weight:700;margin-top:6px;">${mainMatch.away_name}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:16px;">
+          ${hasResult
+            ? won
+              ? `<div class="won-badge" style="font-size:18px;padding:16px;">🏆 당첨! 정확한 스코어를 맞혔습니다 🎯</div>
+                 <div style="text-align:center;font-size:13px;color:var(--g500);margin-top:8px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>`
+              : `<div class="lost-badge" style="font-size:14px;padding:14px;">
+                   ${pred ? `내 예측: ${pred.pred_home} - ${pred.pred_away} · 아쉽게 빗나갔어요 😢` : '이 경기에 예측을 하지 않았습니다'}
+                 </div>`
+            : kicked
+            ? `<div style="text-align:center;padding:14px;background:#fee2e2;border-radius:10px;font-size:14px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측이 마감되었습니다</div>
+               ${pred ? `<div class="pending-badge" style="margin-top:8px;font-size:13px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`
+            : `<div style="font-size:13px;color:var(--g500);margin-bottom:12px;text-align:center;">
+                 정확한 스코어를 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong> 당첨자끼리 판돈을 1/n으로 나눠가집니다
+               </div>
+               ${cd ? `<div style="text-align:center;font-size:13px;color:#d97706;font-weight:600;margin-bottom:10px;">⏰ ${cd}</div>` : ''}
+               <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                 <div style="flex:1;text-align:center;font-size:clamp(12px,3vw,14px);font-weight:600;color:var(--g700);">${mainMatch.home_name}</div>
+                 <div style="display:flex;align-items:center;gap:8px;flex-shrink:0;">
+                   <input class="si" type="number" min="0" max="20" id="mh_${mainMatch.id}" value="${pred ? pred.pred_home : ''}" placeholder="0" style="width:clamp(52px,12vw,64px);font-size:clamp(20px,4vw,26px);" />
+                   <span style="font-size:20px;font-weight:700;color:var(--g400);">-</span>
+                   <input class="si" type="number" min="0" max="20" id="ma_${mainMatch.id}" value="${pred ? pred.pred_away : ''}" placeholder="0" style="width:clamp(52px,12vw,64px);font-size:clamp(20px,4vw,26px);" />
+                 </div>
+                 <div style="flex:1;text-align:center;font-size:clamp(12px,3vw,14px);font-weight:600;color:var(--g700);">${mainMatch.away_name}</div>
+               </div>
+               <button class="pbtn" style="font-size:15px;padding:13px;" onclick="saveMainPred('${mainMatch.id}')">
+                 ${pred ? '✓ 저장됨 · 수정하기' : '예측 저장하기 ⚽'}
+               </button>
+               ${pred ? `<div class="pending-badge" style="margin-top:8px;">현재 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`}
+        </div>`;
+    }
+
+    // 통계
+    const me = prizeData.scores?.find(s => s.id === CU.id) || { wins:0, predicted:0 };
+    const isPaid = prizeData.scores?.find(s => s.id === CU.id)?.entry_fee_paid || false;
+    document.getElementById('SG').innerHTML = `
+      <div class="sc"><div class="sn">${matches.length}</div><div class="sl">전체 경기</div></div>
+      <div class="sc"><div class="sn">${me.predicted}</div><div class="sl">내 예측 수</div></div>
+      <div class="sc"><div class="sn">${me.wins}</div><div class="sl">당첨 횟수 🎯</div></div>
+      <div class="sc"><div class="sn">${fmt(prizeData.totalPool)}</div><div class="sl">현재 판돈</div></div>
+    ` + (isPaid ? '' : `
+      <div style="grid-column:1/-1;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--r);padding:16px 18px;">
+        <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 안내</div>
+        <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;color:#78350f;margin-bottom:10px;">
+          <span>은행</span><strong>저축은행</strong>
+          <span>계좌번호</span><strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
+          <span>금액</span><strong>10,000원</strong>
+        </div>
+        <div style="background:#fef3c7;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;">
+          ⚠️ 반드시 <strong>실명</strong>으로 입금해주세요. 관리자 확인 후 참가 처리됩니다.
+        </div>
+      </div>
+    `);
+  } catch(e) { toast('데이터 로드 실패: '+e.message, 'e'); }
+}
+
+async function saveMainPred(mid) {
+  if (CU.id === 'admin') return toast('관리자는 예측할 수 없습니다', 'e');
+  const h = parseInt(document.getElementById('mh_' + mid).value);
+  const a = parseInt(document.getElementById('ma_' + mid).value);
+  if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return toast('점수를 올바르게 입력해주세요', 'e');
+  try {
+    const matches = await dbGet('matches', { id: mid });
+    const m = matches[0];
+    if (!m) return toast('경기 정보를 찾을 수 없습니다', 'e');
+    if (m.result_home !== null && m.result_home !== undefined) return toast('이미 결과가 나온 경기입니다', 'e');
+    if (isKickedOff(m)) return toast('킥오프 시간이 지나 예측이 마감됐습니다 ⛔', 'e');
+    await dbUpsert('predictions', { user_id: CU.id, match_id: mid, pred_home: h, pred_away: a }, 'user_id,match_id');
+    toast('예측 저장! ⚽', 's');
+    renderHome();
+  } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
+}
+
+// ===================== PREDICT =====================
+function ft(f) {
+  MF = f;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('act'));
+  document.getElementById('t-' + f).classList.add('act');
+  renderPredict();
+}
+
+async function renderPredict() {
+  document.getElementById('MG').innerHTML = '<div class="loading"><span class="spinner"></span>불러오는 중...</div>';
+  try {
+    const [matches, allPreds] = await Promise.all([
+      dbGet('matches'),
+      CU.id === 'admin' ? Promise.resolve([]) : dbGet('predictions', { user_id: CU.id })
+    ]);
+    let list = matches;
+    if (MF==='open') list = matches.filter(m => (m.result_home === null || m.result_home === undefined) && !isKickedOff(m));
+    if (MF==='closed') list = matches.filter(m => (m.result_home !== null && m.result_home !== undefined) || isKickedOff(m));
+    list.sort((a, b) => (a.match_date||'') > (b.match_date||'') ? 1 : -1);
+
+    if (!list.length) { document.getElementById('MG').innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="eicon">⚽</div><p>해당하는 경기가 없습니다</p></div>'; return; }
+    const SC={group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
+    const SL={group:'조별',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+
+    document.getElementById('MG').innerHTML = list.map(m => {
+      const pred = allPreds.find(p => p.match_id === m.id);
+      const hasResult = m.result_home !== null && m.result_home !== undefined;
+      const kicked = isKickedOff(m);
+      const locked = hasResult || kicked; // 결과 입력됐거나 킥오프 지났으면 잠금
+      const won = hasResult && pred && pred.pred_home === m.result_home && pred.pred_away === m.result_away;
+      const lost = hasResult && pred && !won;
+      const cd = countdown(m);
+
+      return `<div class="mc${won?' won':lost?' lost':pred&&!locked?' predicted':''}">
+        <div class="mmeta">
+          <span><span class="sbadge ${SC[m.stage]||'sg'}">${SL[m.stage]||m.stage}</span></span>
+          <span style="font-size:11px;color:${kicked&&!hasResult?'var(--red)':'var(--g500)'};">${fmtKST(m)}</span>
+        </div>
+        <div class="mteams">
+          <div class="team"><div class="tflag">${m.home_flag}</div><div class="tname">${m.home_name}</div></div>
+          <div class="mvs">VS</div>
+          <div class="team"><div class="tflag">${m.away_flag}</div><div class="tname">${m.away_name}</div></div>
+        </div>
+        ${hasResult
+          ? `<div class="result-score">${m.result_home} - ${m.result_away}</div>
+             <div style="text-align:center;font-size:10px;color:var(--g500);margin-bottom:5px;">최종 결과</div>
+             ${won
+               ? `<div class="won-badge">🏆 당첨! 정확한 스코어 🎯</div><div style="text-align:center;font-size:11px;color:var(--g500);margin-top:4px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>`
+               : `<div class="lost-badge">${pred ? `내 예측: ${pred.pred_home} - ${pred.pred_away} · 아쉽게 빗나갔어요` : '예측을 하지 않은 경기입니다'}</div>`}`
+          : kicked
+          ? `<div style="text-align:center;padding:10px;background:#fee2e2;border-radius:10px;font-size:13px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측 마감됨</div>
+             ${pred ? `<div class="pending-badge" style="margin-top:7px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : '<div class="lost-badge" style="margin-top:7px;">예측을 하지 않은 경기입니다</div>'}`
+          : `${cd ? `<div style="text-align:center;font-size:12px;color:#d97706;font-weight:600;margin-bottom:7px;">⏰ ${cd}</div>` : ''}
+             <div class="sinputs">
+               <input class="si" type="number" min="0" max="20" id="ph_${m.id}" value="${pred ? pred.pred_home : ''}" placeholder="0" />
+               <div class="ssep">-</div>
+               <input class="si" type="number" min="0" max="20" id="pa_${m.id}" value="${pred ? pred.pred_away : ''}" placeholder="0" />
+             </div>
+             <button class="pbtn" onclick="savePred('${m.id}')">${pred ? '✓ 저장됨 · 수정하기' : '예측 저장하기'}</button>
+             ${pred ? `<div class="pending-badge">예측 중: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`}
+      </div>`;
+    }).join('');
+  } catch(e) { document.getElementById('MG').innerHTML = '<div class="empty"><div class="eicon">⚠️</div><p>로드 실패: '+e.message+'</p></div>'; }
+}
+
+async function savePred(mid) {
+  const h = parseInt(document.getElementById('ph_' + mid).value);
+  const a = parseInt(document.getElementById('pa_' + mid).value);
+  if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return toast('점수를 올바르게 입력해주세요', 'e');
+  try {
+    const matches = await dbGet('matches', { id: mid });
+    const m = matches[0];
+    if (!m) return toast('경기 정보를 찾을 수 없습니다', 'e');
+    if (m.result_home !== null && m.result_home !== undefined) return toast('이미 결과가 나온 경기입니다', 'e');
+    if (isKickedOff(m)) return toast('킥오프 시간이 지나 예측이 마감됐습니다 ⛔', 'e');
+    await dbUpsert('predictions', { user_id: CU.id, match_id: mid, pred_home: h, pred_away: a }, 'user_id,match_id');
+    toast('예측 저장! ⚽', 's');
+    renderPredict();
+  } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
+}
+
+// ===================== RANK =====================
+async function renderRank() {
+  try {
+    const { scores, prizePerWinner, maxWins } = await calcPrize();
+    if (!scores.length) { document.getElementById('RB').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--g500);">참가자 없음</td></tr>'; return; }
+    document.getElementById('RB').innerHTML = scores.map((s, i) => {
+      const rc = i===0?'r1':i===1?'r2':i===2?'r3':'ro';
+      const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      const isWinner = s.wins === maxWins && maxWins > 0 && s.entry_fee_paid;
+      const prize = isWinner ? prizePerWinner : 0;
+      return `<tr class="${s.id===CU.id?'myrow':''}">
+        <td><span class="rnum ${rc}">${i+1}</span></td>
+        <td>${medal} ${s.name}${s.id===CU.id?' <span style="color:var(--green);font-size:11px;">(나)</span>':''}</td>
+        <td>${s.predicted}</td>
+        <td style="font-size:15px;font-weight:800;color:${s.wins>0?'var(--green)':'var(--g400)'};">${s.wins>0?'🎯 '+s.wins+'회':'-'}</td>
+        <td style="font-weight:700;color:${prize>0?'#b45309':'var(--g400)'};">${prize>0?fmt(prize):'-'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { toast('랭킹 로드 실패', 'e'); }
+}
+
+// ===================== PRIZE =====================
+async function renderPrize() {
+  try {
+    const { scores, totalPool, paidUsers, completedMatchCount, winners, prizePerWinner, maxWins } = await calcPrize();
+    document.getElementById('PP').textContent = fmt(totalPool);
+    document.getElementById('PS').textContent = `납부 ${paidUsers}명 × 10,000원 · ${completedMatchCount}경기 결과 입력됨`;
+
+    if (winners.length > 0 && maxWins > 0) {
+      document.getElementById('WB').innerHTML = `
+        <div class="winner-card">
+          <div style="font-size:11px;color:#92400e;font-weight:600;margin-bottom:3px;">현재 공동 1위 · 당첨자</div>
+          <div style="font-size:20px;font-weight:800;color:#78350f;">🏆 ${winners.map(w=>w.name).join(', ')}</div>
+          <div style="font-size:34px;font-weight:800;color:#b45309;margin:5px 0;">${fmt(prizePerWinner)}</div>
+          <div style="font-size:12px;color:#92400e;">1인당 예상 판돈 · ${maxWins}회 당첨 · ${winners.length}명 분배</div>
+        </div>`;
+    } else {
+      document.getElementById('WB').innerHTML = `<div class="card" style="text-align:center;padding:28px;"><div style="font-size:32px;margin-bottom:7px;">⏳</div><div style="font-weight:600;">아직 당첨자가 없습니다</div><div style="font-size:12px;color:var(--g500);margin-top:4px;">경기 결과가 입력되면 판돈 수령자가 확정됩니다</div></div>`;
+    }
+
+    document.getElementById('PB').innerHTML = scores.map(s => {
+      const isW = s.wins===maxWins && maxWins>0 && s.entry_fee_paid;
+      const prize = isW ? prizePerWinner : 0;
+      return `<tr class="${isW?'wrow':''}">
+        <td>${s.name}${s.id===CU.id?' <span style="color:var(--green);font-size:11px;">(나)</span>':''}</td>
+        <td><span class="pb ${s.entry_fee_paid?'pb-y':'pb-n'}">${s.entry_fee_paid?'✓ 납부':'미납'}</span></td>
+        <td>${s.predicted}</td>
+        <td style="font-weight:${s.wins>0?700:400};color:${s.wins>0?'var(--green)':'var(--g400)'};">${s.wins>0?'🎯 '+s.wins+'회':'-'}</td>
+        <td style="font-weight:700;color:${prize>0?'#b45309':'var(--g400)'};">${prize>0?fmt(prize):'-'}</td>
+      </tr>`;
+    }).join('');
+  } catch(e) { toast('상금 정보 로드 실패', 'e'); }
+}
+
+// ===================== ADMIN =====================
+async function renderAdmin() {
+  await Promise.all([renderAdminMatches(), renderUserList()]);
+}
+
+async function renderAdminMatches() {
+  try {
+    const matches = await dbGet('matches');
+    matches.sort((a,b) => (a.match_date||'') > (b.match_date||'') ? 1 : -1);
+    const SL={group:'조별',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+    if (!matches.length) { document.getElementById('AML').innerHTML = '<div class="empty"><div class="eicon">📋</div><p>경기 없음</p></div>'; return; }
+    document.getElementById('AML').innerHTML = matches.map((m, i) => `
+      <div class="ami" style="${m.is_main ? 'border:2px solid var(--gold);background:#fffbeb;' : ''}">
+        <div style="font-size:11px;color:var(--g400);min-width:20px;">#${i+1}</div>
+        <div class="amt">${m.is_main ? '<span style="font-size:11px;background:var(--gold);color:#78350f;padding:1px 6px;border-radius:4px;font-weight:700;">MAIN</span> ' : ''}${m.home_flag} ${m.home_name} <span style="color:var(--g400);font-size:10px;">${SL[m.stage]||m.stage}</span> ${m.away_flag} ${m.away_name}</div>
+        <div style="font-size:11px;color:var(--g500);">${m.match_date||''}</div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span style="font-size:11px;color:var(--g500);">결과</span>
+          <input class="ri" type="number" min="0" max="20" id="rh_${m.id}" value="${m.result_home !== null && m.result_home !== undefined ? m.result_home : ''}" placeholder="홈" />
+          <span style="color:var(--g400);">-</span>
+          <input class="ri" type="number" min="0" max="20" id="ra_${m.id}" value="${m.result_away !== null && m.result_away !== undefined ? m.result_away : ''}" placeholder="원정" />
+          <button class="srb" onclick="saveResult('${m.id}')">저장</button>
+        </div>
+        ${m.is_main
+          ? '<span style="font-size:11px;color:#b45309;font-weight:600;">📌 메인</span>'
+          : `<button class="srb" style="background:var(--gold);color:#78350f;" onclick="setMain('${m.id}')">메인 지정</button>`}
+        <button class="del" onclick="delMatch('${m.id}')">🗑</button>
+      </div>`).join('');
+  } catch(e) { toast('경기 목록 로드 실패', 'e'); }
+}
+
+async function renderUserList() {
+  try {
+    const { scores } = await calcPrize();
+    if (!scores.length) { document.getElementById('UL').innerHTML = '<p style="color:var(--g500);font-size:13px;">참가자 없음</p>'; return; }
+    document.getElementById('UL').innerHTML = `<table class="prize-table" style="width:100%;">
+      <thead><tr><th>닉네임</th><th>실명 (입금자 확인용)</th><th>참가비</th><th>당첨 횟수</th><th>조작</th></tr></thead>
+      <tbody>${scores.map(s => `<tr>
+        <td style="font-weight:600;">${s.name}</td>
+        <td style="color:var(--g700);">${s.real_name || '<span style="color:var(--g400);font-size:12px;">미입력</span>'}</td>
+        <td><span class="pb ${s.entry_fee_paid?'pb-y':'pb-n'}">${s.entry_fee_paid?'✓ 납부':'미납'}</span></td>
+        <td>${s.wins>0?'🎯 '+s.wins+'회':'-'}</td>
+        <td>${s.entry_fee_paid
+          ? `<button class="btn btn-sm btn-red" onclick="setPaid('${s.id}',false)" style="font-size:11px;">납부 취소</button>`
+          : `<button class="btn btn-sm" onclick="setPaid('${s.id}',true)" style="font-size:11px;padding:5px 9px;">납부 확인 ✓</button>`}
+        </td>
+      </tr>`).join('')}</tbody>
+    </table>`;
+  } catch(e) {}
+}
+
+async function addMatch() {
+  if (!SH || !SA) return toast('홈팀과 원정팀을 선택해주세요', 'e');
+  if (SH.n === SA.n) return toast('같은 국가를 선택할 수 없습니다', 'e');
+  try {
+    await dbInsert('matches', { home_name:SH.n, home_flag:SH.f, away_name:SA.n, away_flag:SA.f, stage: document.getElementById('MS').value, match_date: document.getElementById('MD').value || null, match_time: document.getElementById('MT').value || null, result_home:null, result_away:null });
+    SH=null; SA=null;
+    document.getElementById('HTB').innerHTML='🔍 국가 선택';
+    document.getElementById('ATB').innerHTML='🔍 국가 선택';
+    toast('경기 추가 완료!', 's');
+    renderAdminMatches();
+  } catch(e) { toast('추가 실패: ' + e.message, 'e'); }
+}
+
+async function saveResult(id) {
+  const h = parseInt(document.getElementById('rh_' + id).value);
+  const a = parseInt(document.getElementById('ra_' + id).value);
+  if (isNaN(h) || isNaN(a)) return toast('결과 점수를 입력해주세요', 'e');
+  try {
+    await dbUpdate('matches', id, { result_home: h, result_away: a });
+    toast('결과 저장 완료! 🎉', 's');
+  } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
+}
+
+async function delMatch(id) {
+  if (!confirm('이 경기를 삭제하시겠습니까?\n관련 예측도 모두 삭제됩니다.')) return;
+  try {
+    const preds = await dbGet('predictions', { match_id: id });
+    for (const p of preds) await dbDelete('predictions', p.id);
+    await dbDelete('matches', id);
+    toast('경기 삭제됨', 'e');
+    renderAdminMatches();
+  } catch(e) { toast('삭제 실패: ' + e.message, 'e'); }
+}
+
+async function setMain(matchId) {
+  try {
+    const matches = await dbGet('matches');
+    // 기존 메인 해제
+    for (const m of matches.filter(m => m.is_main)) {
+      await dbUpdate('matches', m.id, { is_main: false });
+    }
+    // 새 메인 지정
+    await dbUpdate('matches', matchId, { is_main: true });
+    toast('메인 경기가 지정되었습니다 📌', 's');
+    renderAdminMatches();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function setPaid(userId, paid) {
+  try {
+    await dbUpdate('users', userId, { entry_fee_paid: paid });
+    toast(paid ? '납부 확인!' : '납부 취소됨', paid ? 's' : 'e');
+    renderUserList();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function changeAdminPw() {
+  const cur = document.getElementById('CAP').value;
+  const nw = document.getElementById('NAP').value;
+  if (!nw || nw.length < 4) return toast('새 비밀번호는 4자 이상', 'e');
+  try {
+    const rows = await dbGet('settings', { key: 'admin_pw' });
+    const realPw = rows[0]?.value || 'admin1234';
+    if (cur !== realPw) return toast('현재 비밀번호가 틀렸습니다', 'e');
+    await dbUpsert('settings', { key: 'admin_pw', value: nw }, 'key');
+    adminPwCache = nw;
+    document.getElementById('CAP').value = '';
+    document.getElementById('NAP').value = '';
+    toast('비밀번호 변경 완료', 's');
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+// ===================== COUNTRY MODAL =====================
+function openCM(t) { CMT=t; document.getElementById('CM').classList.add('open'); document.getElementById('CS').value=''; renderCG(COUNTRIES); setTimeout(()=>document.getElementById('CS').focus(),80); }
+function closeCM() { document.getElementById('CM').classList.remove('open'); }
+function filterC() { const q=document.getElementById('CS').value.toLowerCase(); renderCG(COUNTRIES.filter(c=>c.n.toLowerCase().includes(q))); }
+function renderCG(list) { document.getElementById('CG').innerHTML=list.map(c=>`<div class="ci" onclick="selC('${c.n}','${c.f}')"><span style="font-size:19px;">${c.f}</span><span>${c.n}</span></div>`).join(''); }
+function selC(n,f) {
+  if (CMT==='home') { SH={n,f}; document.getElementById('HTB').innerHTML=f+' '+n; }
+  else { SA={n,f}; document.getElementById('ATB').innerHTML=f+' '+n; }
+  closeCM();
+}
+document.getElementById('CM').addEventListener('click', e => { if (e.target===document.getElementById('CM')) closeCM(); });
+
+// ===================== TOAST =====================
+function toast(msg, type='') {
+  const t=document.getElementById('T');
+  t.textContent=msg; t.className='toast show '+type;
+  setTimeout(()=>t.className='toast',2500);
+}
+
+function fmt(n) { return (n||0).toLocaleString('ko-KR')+'원'; }
+
+document.addEventListener('keydown', e => {
+  if (e.key!=='Enter') return;
+  if (document.getElementById('SETUP').style.display!=='none') return;
+  if (document.getElementById('LM').style.display!=='none') doLogin();
+  else if (document.getElementById('RM').style.display!=='none') doRegister();
+  else if (document.getElementById('AM').style.display!=='none') doAdminLogin();
+});
+</script>
+</body>
+</html>
