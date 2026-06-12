@@ -260,6 +260,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
 </head>
 <body>
 
+
 <!-- ① SETUP: Supabase 연결 설정 화면 -->
 <div id="SETUP" class="lw">
   <div class="setup-box">
@@ -296,7 +297,8 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <div class="lb">
     <div class="licon">🏆</div>
     <h1 class="ltitle">SB토토</h1>
-    <p class="lsub">2026 FIFA 월드컵 스코어 맞추기</p>
+    <p class="lsub" style="margin-bottom:4px;">2026 FIFA 월드컵 스코어 맞추기</p>
+    <p style="font-size:13px;font-weight:700;color:var(--green-d);margin-bottom:20px;letter-spacing:-0.3px;">저축은 SB톡톡 베팅은 SB토토</p>
     <div id="LM">
       <div class="fg"><label class="flabel">닉네임</label><input class="fi" id="lname" type="text" placeholder="닉네임 입력" /></div>
       <div class="fg"><label class="flabel">비밀번호</label><input class="fi" id="lpw" type="password" placeholder="비밀번호 입력" /></div>
@@ -378,6 +380,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
       </div>
       <div style="margin-top:10px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
         ⚠️ 반드시 <strong>실명</strong>으로 입금해주세요. 관리자 확인 후 참가 처리됩니다.
+      </div>
+      <div style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
+        🏦 IBK저축은행 모임통장으로 투명하고 안전하게 관리되는 계좌입니다.
       </div>
     </div>
     <div id="WB"></div>
@@ -808,6 +813,9 @@ async function renderHome() {
         <div style="background:#fef3c7;border-radius:8px;padding:8px 12px;font-size:12px;color:#92400e;">
           ⚠️ 반드시 <strong>실명</strong>으로 입금해주세요. 관리자 확인 후 참가 처리됩니다.
         </div>
+        <div style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
+          🏦 IBK저축은행 모임통장으로 투명하고 안전하게 관리되는 계좌입니다.
+        </div>
       </div>
     `);
   } catch(e) { toast('데이터 로드 실패: '+e.message, 'e'); }
@@ -1071,6 +1079,7 @@ async function setPaid(userId, paid) {
     renderUserList();
   } catch(e) { toast('오류: ' + e.message, 'e'); }
 }
+
 
 async function changeAdminPw() {
   const cur = document.getElementById('CAP').value;
