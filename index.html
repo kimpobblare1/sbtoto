@@ -725,7 +725,7 @@ async function renderHome() {
             ? `<div style="text-align:center;padding:14px;background:#fee2e2;border-radius:10px;font-size:14px;font-weight:700;color:#991b1b;">⛔ 킥오프! 예측이 마감되었습니다</div>
                ${pred ? `<div class="pending-badge" style="margin-top:8px;font-size:13px;">내 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`
             : `<div style="font-size:13px;color:var(--g500);margin-bottom:12px;text-align:center;">
-                 정확한 스코어를 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong> 당첨자끼리 판돈을 1/n으로 나눠가집니다
+                 정확한 스코어를 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong><br>당첨자끼리 판돈을 1/n으로 나눠가집니다
                </div>
                ${cd ? `<div style="text-align:center;font-size:13px;color:#d97706;font-weight:600;margin-bottom:10px;">⏰ ${cd}</div>` : ''}
                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
