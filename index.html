@@ -370,7 +370,11 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
     <div class="card" style="background:#fffbeb;border:1.5px solid #f59e0b;margin-bottom:16px;">
       <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 계좌</div>
       <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:14px;color:#78350f;white-space:nowrap;">
-        <span>은행</span><strong>저축은행</strong>
+        <span>은행</span>
+        <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+          <strong>저축은행 (모임통장)</strong>
+          <button onclick="window.open(MOIM_LINK,'_blank')" style="background:#f59e0b;color:#78350f;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">모임원 되기</button>
+        </div>
         <span>계좌번호</span>
         <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
           <strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
@@ -384,6 +388,9 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
       </div>
       <div style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
         🏦 IBK저축은행 모임통장으로 투명하고 안전하게 관리
+      </div>
+      <div style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
+        ✅ 모임원 가입은 선택사항 · 가입 없이도 참여 가능합니다
       </div>
     </div>
     <div id="WB"></div>
@@ -487,6 +494,9 @@ const SUPABASE_URL = 'https://netktxtrqiggzbgulthn.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5ldGt0eHRycWlnZ3piZ3VsdGhuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExMDg1MzUsImV4cCI6MjA5NjY4NDUzNX0.QHmNbQ2tCa99PBlbrT7AyAODqtZguLRvSc0p5V8mPps';
 
 let sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ===================== 모임통장 초대링크 (1주일마다 교체) =====================
+const MOIM_LINK = 'https://smb.fsb.or.kr/MtgInvtJoin0100.act?mtBnkbInvCd=W3wHOjJP1nsupSyie6iWrg';
 
 document.getElementById('SETUP').style.display = 'none';
 document.getElementById('LP').style.display = '';
@@ -822,7 +832,11 @@ async function renderHome() {
       <div style="grid-column:1/-1;background:#fffbeb;border:1.5px solid #f59e0b;border-radius:var(--r);padding:16px 18px;">
         <div style="font-size:14px;font-weight:700;color:#92400e;margin-bottom:10px;">💰 참가비 입금 안내</div>
         <div style="display:grid;grid-template-columns:auto 1fr;gap:4px 16px;font-size:13px;color:#78350f;margin-bottom:10px;white-space:nowrap;">
-          <span>은행</span><strong>저축은행</strong>
+          <span>은행</span>
+          <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
+            <strong>저축은행 (모임통장)</strong>
+            <button onclick="window.open(MOIM_LINK,'_blank')" style="background:#f59e0b;color:#78350f;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">모임원 되기</button>
+          </div>
           <span>계좌번호</span>
           <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
             <strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
@@ -836,6 +850,9 @@ async function renderHome() {
         </div>
         <div style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
           🏦 IBK저축은행 모임통장으로 투명하고 안전하게 관리
+        </div>
+        <div style="margin-top:8px;padding:8px 12px;background:#fef3c7;border-radius:8px;font-size:12px;color:#92400e;">
+          ✅ 모임원 가입은 선택사항 · 가입 없이도 참여 가능합니다
         </div>
       </div>
     `);
