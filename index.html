@@ -375,6 +375,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
         <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
           <strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
           <button onclick="copyAccount()" style="background:#f59e0b;color:#78350f;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">복사</button>
+            <button onclick="openToss()" style="background:#0064ff;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">토스 송금</button>
         </div>
         <span>금액</span><strong>10,000원</strong>
       </div>
@@ -826,6 +827,7 @@ async function renderHome() {
           <div style="display:flex;align-items:center;gap:8px;white-space:nowrap;">
             <strong style="font-size:15px;letter-spacing:0.5px;">650-61-21-0138967</strong>
             <button onclick="copyAccount()" style="background:#f59e0b;color:#78350f;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">복사</button>
+            <button onclick="openToss()" style="background:#0064ff;color:#fff;border:none;border-radius:6px;padding:3px 10px;font-size:12px;font-weight:700;cursor:pointer;flex-shrink:0;">토스 송금</button>
           </div>
           <span>금액</span><strong>10,000원</strong>
         </div>
@@ -1197,6 +1199,34 @@ function togglePreds() {
     wrap.style.display = 'none';
     btn.textContent = '펼치기 ▼';
   }
+}
+
+// ===================== TOSS =====================
+function openToss() {
+  // 계좌번호 클립보드 복사
+  const accNum = '65061210138967';
+  navigator.clipboard.writeText(accNum).catch(() => {
+    const el = document.createElement('textarea');
+    el.value = accNum;
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand('copy');
+    document.body.removeChild(el);
+  });
+  // 토스 앱 딥링크 실행
+  // 토스 송금 딥링크: supertoss://send?bank=저축은행&accountNumber=계좌번호&amount=10000
+  const tossDeepLink = 'supertoss://send?bank=%EC%A0%80%EC%B6%95%EC%9D%80%ED%96%89&accountNumber=65061210138967&amount=10000';
+  const tossWebLink = 'https://toss.im/transfer-universal-link/pay?bank=%EC%A0%80%EC%B6%95%EC%9D%80%ED%96%89&accountNumber=65061210138967&amount=10000';
+
+  // 앱 실행 시도 후 실패하면 토스 웹으로 이동
+  const start = Date.now();
+  window.location.href = tossDeepLink;
+  setTimeout(() => {
+    if (Date.now() - start < 2000) {
+      window.open(tossWebLink, '_blank');
+    }
+  }, 1500);
+  toast('계좌번호 복사됨! 토스 앱을 여는 중...', 's');
 }
 
 // ===================== COPY =====================
