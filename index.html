@@ -355,7 +355,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
       <div class="ctitle">🏅 SB토토 랭킹</div>
       <div style="font-size:12px;color:var(--g500);margin-bottom:13px;">정확한 스코어를 맞혀야 당첨! 당첨 횟수가 많을수록 판돈이 많아집니다.</div>
       <div style="overflow-x:auto;"><table class="rtable"><thead><tr>
-        <th style="width:50px;">순위</th><th>참가자</th><th>예측</th><th>당첨</th><th>예상판돈</th>
+        <th style="width:50px;">순위</th><th>참가자</th><th>예측</th><th>당첨</th><th>예상판돈</th><th>누적수령</th>
       </tr></thead><tbody id="RB"></tbody></table></div>
     </div>
   </div>
@@ -418,6 +418,25 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
       <p style="font-size:12px;color:var(--g500);margin-bottom:12px;">저축은행 650-61-21-0138967 · 입금자 실명 확인 후 체크하세요.</p>
       <div id="UL"></div>
     </div>
+    <div class="card">
+      <div class="ctitle">💸 판돈 지급 기록</div>
+      <p style="font-size:12px;color:var(--g500);margin-bottom:12px;">당첨자에게 판돈을 송금한 후 기록해주세요. 랭킹의 누적수령액에 반영됩니다.</p>
+      <div id="PAYOUT_FORM" style="background:var(--g50);border-radius:var(--r);padding:16px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;">
+          <div>
+            <div class="flabel">수령자</div>
+            <select class="csel" id="PO_USER"></select>
+          </div>
+          <div>
+            <div class="flabel">금액 (원)</div>
+            <input class="fi" id="PO_AMT" type="number" placeholder="36666" />
+          </div>
+          <button class="btn btn-sm btn-gold" onclick="addPayout()" style="margin-bottom:1px;">기록 추가</button>
+        </div>
+      </div>
+      <div id="PAYOUT_LIST"></div>
+    </div>
+
     <div class="card">
       <div class="ctitle">⚙️ 설정</div>
       <div class="flabel" style="margin-bottom:6px;">관리자 비밀번호 변경</div>
@@ -922,19 +941,24 @@ async function savePred(mid) {
 // ===================== RANK =====================
 async function renderRank() {
   try {
-    const { scores, prizePerWinner, maxWins } = await calcPrize();
-    if (!scores.length) { document.getElementById('RB').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:28px;color:var(--g500);">참가자 없음</td></tr>'; return; }
+    const [{ scores, prizePerWinner, maxWins }, payouts] = await Promise.all([
+      calcPrize(),
+      dbGet('payouts')
+    ]);
+    if (!scores.length) { document.getElementById('RB').innerHTML = '<tr><td colspan="6" style="text-align:center;padding:28px;color:var(--g500);">참가자 없음</td></tr>'; return; }
     document.getElementById('RB').innerHTML = scores.map((s, i) => {
       const rc = i===0?'r1':i===1?'r2':i===2?'r3':'ro';
       const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
       const isWinner = s.wins === maxWins && maxWins > 0 && s.entry_fee_paid;
       const prize = isWinner ? prizePerWinner : 0;
+      const totalReceived = payouts.filter(p => p.user_id === s.id).reduce((sum, p) => sum + p.amount, 0);
       return `<tr class="${s.id===CU.id?'myrow':''}">
         <td><span class="rnum ${rc}">${i+1}</span></td>
         <td>${medal} ${s.name}${s.id===CU.id?' <span style="color:var(--green);font-size:11px;">(나)</span>':''}</td>
         <td>${s.predicted}</td>
         <td style="font-size:15px;font-weight:800;color:${s.wins>0?'var(--green)':'var(--g400)'};">${s.wins>0?'🎯 '+s.wins:'-'}</td>
         <td style="font-weight:700;color:${prize>0?'#b45309':'var(--g400)'};">${prize>0?fmt(prize):'-'}</td>
+        <td style="font-weight:700;color:${totalReceived>0?'#065f46':'var(--g400)'};">${totalReceived>0?fmt(totalReceived):'-'}</td>
       </tr>`;
     }).join('');
   } catch(e) { toast('랭킹 로드 실패', 'e'); }
@@ -975,7 +999,7 @@ async function renderPrize() {
 
 // ===================== ADMIN =====================
 async function renderAdmin() {
-  await Promise.all([renderAdminMatches(), renderUserList()]);
+  await Promise.all([renderAdminMatches(), renderUserList(), renderPayouts()]);
 }
 
 async function renderAdminMatches() {
@@ -1080,6 +1104,58 @@ async function setPaid(userId, paid) {
   } catch(e) { toast('오류: ' + e.message, 'e'); }
 }
 
+
+async function renderPayouts() {
+  try {
+    const [payouts, users] = await Promise.all([dbGet('payouts'), dbGet('users')]);
+    // 수령자 select 채우기
+    const sel = document.getElementById('PO_USER');
+    if (sel) {
+      sel.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+    }
+    // 지급 목록
+    const list = document.getElementById('PAYOUT_LIST');
+    if (!list) return;
+    if (!payouts.length) { list.innerHTML = '<p style="color:var(--g500);font-size:13px;text-align:center;padding:12px;">기록된 지급 내역이 없습니다</p>'; return; }
+    // 날짜 내림차순 정렬
+    payouts.sort((a, b) => (b.created_at||'') > (a.created_at||'') ? 1 : -1);
+    list.innerHTML = `<table class="prize-table" style="width:100%;">
+      <thead><tr><th>수령자</th><th>금액</th><th>날짜</th><th></th></tr></thead>
+      <tbody>${payouts.map(p => {
+        const user = users.find(u => u.id === p.user_id);
+        const date = p.created_at ? p.created_at.slice(0,10) : '';
+        return `<tr>
+          <td style="font-weight:600;">${user ? user.name : '?'}</td>
+          <td style="font-weight:700;color:#065f46;">${fmt(p.amount)}</td>
+          <td style="color:var(--g500);font-size:12px;">${date}</td>
+          <td><button class="del" onclick="deletePayout('${p.id}')">🗑</button></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  } catch(e) { console.error(e); }
+}
+
+async function addPayout() {
+  const userId = document.getElementById('PO_USER').value;
+  const amount = parseInt(document.getElementById('PO_AMT').value);
+  if (!userId) return toast('수령자를 선택해주세요', 'e');
+  if (isNaN(amount) || amount <= 0) return toast('금액을 올바르게 입력해주세요', 'e');
+  try {
+    await dbInsert('payouts', { user_id: userId, amount });
+    document.getElementById('PO_AMT').value = '';
+    toast('지급 기록 완료! 💸', 's');
+    renderPayouts();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function deletePayout(id) {
+  if (!confirm('이 지급 기록을 삭제하시겠습니까?')) return;
+  try {
+    await dbDelete('payouts', id);
+    toast('삭제됨', 'e');
+    renderPayouts();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
 
 async function changeAdminPw() {
   const cur = document.getElementById('CAP').value;
