@@ -633,12 +633,20 @@ async function calcPrize() {
   const entryFee = 10000;
   const paidUsers = users.filter(u => u.entry_fee_paid);
   const totalPool = paidUsers.length * entryFee;
+
+  // 현재 메인 경기만 기준으로 계산 (메인 없으면 가장 최근 경기)
+  const mainMatch = matches.find(m => m.is_main) ||
+    matches.sort((a,b) => (b.created_at||'') > (a.created_at||'') ? 1 : -1)[0];
+  // 메인 경기에 결과가 있을 때만 적중 계산
+  const targetMatches = (mainMatch && mainMatch.result_home !== null && mainMatch.result_home !== undefined)
+    ? [mainMatch] : [];
   const completedMatches = matches.filter(m => m.result_home !== null && m.result_home !== undefined);
 
   const scores = users.filter(u => u.id !== 'admin').map(u => {
     const myPreds = preds.filter(p => p.user_id === u.id);
     let wins = 0;
-    completedMatches.forEach(m => {
+    // 적중은 현재 메인 경기 기준으로만 계산
+    targetMatches.forEach(m => {
       const pred = myPreds.find(p => p.match_id === m.id);
       if (pred && pred.pred_home === m.result_home && pred.pred_away === m.result_away) wins++;
     });
