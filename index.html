@@ -1058,17 +1058,15 @@ async function renderHistory() {
   const el = document.getElementById('HIST_LIST');
   el.innerHTML = '<div class="loading"><span class="spinner"></span>불러오는 중...</div>';
   try {
-    const [matches, preds, users] = await Promise.all([
-      dbGet('matches'), dbGet('predictions'), dbGet('users')
+    const [matches, preds, users, snapshots] = await Promise.all([
+      dbGet('matches'), dbGet('predictions'), dbGet('users'), dbGet('paid_snapshots')
     ]);
 
     // 결과가 입력된 경기만, 날짜 내림차순
     const done = matches
       .filter(m => m.result_home !== null && m.result_home !== undefined)
       .sort((a, b) => (b.match_date||'') > (a.match_date||'') ? 1 : -1);
-    // 결과 있는 경기는 납부자 예측만 표시
-    const paidUserIds = new Set(users.filter(u => u.entry_fee_paid).map(u => u.id));
-
+    // 지난경기: 스냅샷 기준으로 경기별 납부자 판단
     if (!done.length) {
       el.innerHTML = '<div class="empty"><div class="eicon">📭</div><p>아직 결과가 입력된 경기가 없습니다</p></div>';
       return;
@@ -1078,31 +1076,39 @@ async function renderHistory() {
     const SC = {group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
 
     el.innerHTML = done.map(m => {
-      const matchPreds = preds.filter(p => p.match_id === m.id && paidUserIds.has(p.user_id));
-      const winners = matchPreds.filter(p => p.pred_home === m.result_home && p.pred_away === m.result_away);
+      // 이 경기의 스냅샷 납부자 목록
+      const snapPaidIds = new Set(snapshots.filter(s => s.match_id === m.id).map(s => s.user_id));
+      // 스냅샷 없으면 현재 납부상태 fallback
+      const useFallback = snapPaidIds.size === 0;
+      const effectivePaidIds = useFallback ? new Set(users.filter(u => u.entry_fee_paid).map(u => u.id)) : snapPaidIds;
+      const matchPreds = preds.filter(p => p.match_id === m.id);
+      const winners = matchPreds.filter(p => p.pred_home === m.result_home && p.pred_away === m.result_away && effectivePaidIds.has(p.user_id));
 
       const rows = matchPreds.length ? matchPreds.map((p, idx) => {
         const user = users.find(u => u.id === p.user_id);
         const uname = user ? user.name : '?';
         const won = p.pred_home === m.result_home && p.pred_away === m.result_away;
         const isMe = p.user_id === CU.id;
-        return `<tr style="${isMe ? 'background:#f0fdf4;font-weight:700;' : idx % 2 === 1 ? 'background:var(--g50);' : ''}">
-          <td style="padding:8px 10px;font-size:12px;border-bottom:1px solid var(--g100);">
-            ${isMe ? '⭐ ' : ''}${uname}
+        const isPaid = effectivePaidIds.has(p.user_id);
+        return `<tr style="${!isPaid ? 'opacity:0.45;' : isMe ? 'background:#f0fdf4;font-weight:700;' : idx % 2 === 1 ? 'background:var(--g50);' : ''}">
+          <td style="padding:8px 10px;font-size:12px;border-bottom:1px solid var(--g100);color:${isPaid?'inherit':'var(--g400)'};">
+            ${isMe ? '⭐ ' : ''}${uname}${!isPaid ? ' <span style="font-size:10px;background:var(--g200);color:var(--g500);padding:1px 5px;border-radius:4px;">미납</span>' : ''}
           </td>
           <td style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--g100);">
             <span style="display:inline-flex;align-items:center;gap:5px;">
               <span style="font-size:16px;">${m.home_flag}</span>
-              <span style="font-size:14px;font-weight:800;color:var(--green-d);">${p.pred_home}</span>
+              <span style="font-size:14px;font-weight:${isPaid?'800':'400'};color:${isPaid?'var(--green-d)':'var(--g400)'};">${p.pred_home}</span>
               <span style="color:var(--g400);">-</span>
-              <span style="font-size:14px;font-weight:800;color:var(--green-d);">${p.pred_away}</span>
+              <span style="font-size:14px;font-weight:${isPaid?'800':'400'};color:${isPaid?'var(--green-d)':'var(--g400)'};">${p.pred_away}</span>
               <span style="font-size:16px;">${m.away_flag}</span>
             </span>
           </td>
           <td style="padding:8px 10px;text-align:center;border-bottom:1px solid var(--g100);">
-            ${won
-              ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">🏆 적중</span>'
-              : '<span style="background:var(--red-l);color:var(--red);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">✗ 실패</span>'}
+            ${isPaid
+              ? (won
+                ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">🏆 적중</span>'
+                : '<span style="background:var(--red-l);color:var(--red);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">✗ 실패</span>')
+              : '<span style="color:var(--g400);font-size:11px;">-</span>'}
           </td>
         </tr>`;
       }).join('') : `<tr><td colspan="3" style="padding:16px;text-align:center;color:var(--g400);font-size:13px;">예측한 사람이 없습니다</td></tr>`;
@@ -1237,6 +1243,15 @@ async function saveResult(id) {
   if (isNaN(h) || isNaN(a)) return toast('결과 점수를 입력해주세요', 'e');
   try {
     await dbUpdate('matches', id, { result_home: h, result_away: a });
+    // 결과 입력 시점의 납부자 목록 스냅샷 저장
+    const users = await dbGet('users');
+    const paidUsers = users.filter(u => u.entry_fee_paid);
+    // 기존 스냅샷 삭제 후 새로 저장
+    const existing = await dbGet('paid_snapshots', { match_id: id });
+    for (const s of existing) await dbDelete('paid_snapshots', s.id);
+    for (const u of paidUsers) {
+      await dbInsert('paid_snapshots', { match_id: id, user_id: u.id });
+    }
     toast('결과 저장 완료! 🎉', 's');
   } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
 }
