@@ -692,12 +692,13 @@ function countdown(match) {
 async function renderHome() {
   try {
     const isAdminUser = CU.id === 'admin';
-    const [matches, preds, prizeData, allPreds, allUsers] = await Promise.all([
+    const [matches, preds, prizeData, allPreds, allUsers, settings] = await Promise.all([
       dbGet('matches'),
       isAdminUser ? Promise.resolve([]) : dbGet('predictions', { user_id: CU.id }),
       calcPrize(),
       dbGet('predictions'),
-      dbGet('users')
+      dbGet('users'),
+      dbGet('settings')
     ]);
 
     // 메인 경기: is_main = true 인 것, 없으면 가장 최근 경기
@@ -785,8 +786,17 @@ async function renderHome() {
       const isPaidUser = prizeData.scores?.find(s => s.id === CU.id)?.entry_fee_paid || false;
       const mainDone = mainMatch && mainMatch.result_home !== null && mainMatch.result_home !== undefined;
       const hasWinners = prizeData.winners && prizeData.winners.length > 0 && prizeData.maxWins > 0;
-      // 메인 경기 결과 나왔고 적중자 없고 납부자일 때 이월 배너 표시
+      // settings에서 이월 금액 확인
+      const rolloverSetting = settings.find(s => s.key === 'rollover_amount');
+      const rolloverAmount = rolloverSetting ? parseInt(rolloverSetting.value) : 0;
+      // 다음 경기 킥오프 여부
+      const nextKickedOff = mainMatch ? isKickedOff(mainMatch) : false;
+      // 이월 배너 표시 조건:
+      // 1) 이전 경기 결과 나왔고 적중자 없을 때 → settings에 이월금액 저장
+      // 2) settings에 이월금액 있고 킥오프 전 → 배너 표시
       if (isPaidUser && mainDone && !hasWinners && prizeData.totalPool > 0) {
+        // 이월 발생 시 settings에 저장
+        await dbUpsert('settings', { key: 'rollover_amount', value: String(prizeData.totalPool) }, 'key');
         noticeBanner.innerHTML = `
           <div style="background:linear-gradient(135deg,#92400e,#b45309);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;color:#fff;">
             <div style="font-size:28px;flex-shrink:0;">🎲</div>
@@ -800,7 +810,25 @@ async function renderHome() {
               </div>
             </div>
           </div>`;
+      } else if (isPaidUser && rolloverAmount > 0 && !nextKickedOff && !hasWinners) {
+        // 다음 경기 진행 중 + 킥오프 전 + 아직 적중자 없음 → 이월 배너 유지
+        noticeBanner.innerHTML = `
+          <div style="background:linear-gradient(135deg,#92400e,#b45309);border-radius:var(--r);padding:14px 18px;margin-bottom:16px;display:flex;align-items:center;gap:12px;color:#fff;">
+            <div style="font-size:28px;flex-shrink:0;">🎲</div>
+            <div>
+              <div style="font-size:14px;font-weight:800;margin-bottom:3px;">판돈 이월 안내</div>
+              <div style="font-size:13px;opacity:.9;line-height:1.9;">
+                이번 경기 적중자가 없어 판돈 <strong>${fmt(rolloverAmount)}</strong>이<br>
+                다음 경기로 이월됩니다.<br>
+                추가 납부 없이 다음 경기에 자동으로 참여됩니다. 🔥
+              </div>
+            </div>
+          </div>`;
       } else {
+        // 킥오프 지나거나 적중자 나오면 이월 금액 초기화
+        if (rolloverAmount > 0 && (nextKickedOff || hasWinners)) {
+          await dbUpsert('settings', { key: 'rollover_amount', value: '0' }, 'key');
+        }
         noticeBanner.innerHTML = '';
       }
     }
