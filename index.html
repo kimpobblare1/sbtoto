@@ -1301,13 +1301,26 @@ async function saveResult(id) {
     // 결과 입력 시점의 납부자 목록 스냅샷 저장
     const users = await dbGet('users');
     const paidUsers = users.filter(u => u.entry_fee_paid);
-    // 기존 스냅샷 삭제 후 새로 저장
     const existing = await dbGet('paid_snapshots', { match_id: id });
     for (const s of existing) await dbDelete('paid_snapshots', s.id);
     for (const u of paidUsers) {
       await dbInsert('paid_snapshots', { match_id: id, user_id: u.id });
     }
-    toast('결과 저장 완료! 🎉', 's');
+    // 적중자 없으면 이월 금액 자동 저장
+    const preds = await dbGet('predictions', { match_id: id });
+    const winners = preds.filter(p =>
+      p.pred_home === h && p.pred_away === a &&
+      paidUsers.some(u => u.id === p.user_id)
+    );
+    if (winners.length === 0 && paidUsers.length > 0) {
+      const totalPool = paidUsers.length * 10000;
+      await dbUpsert('settings', { key: 'rollover_amount', value: String(totalPool) }, 'key');
+      toast('결과 저장 완료! 적중자 없음 → 판돈 이월 처리됨 🎲', 's');
+    } else {
+      // 적중자 있으면 이월 금액 초기화
+      await dbUpsert('settings', { key: 'rollover_amount', value: '0' }, 'key');
+      toast('결과 저장 완료! 🎉', 's');
+    }
   } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
 }
 
