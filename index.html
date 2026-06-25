@@ -424,7 +424,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:13px;">
         <div><div class="flabel">경기 단계</div>
-          <select class="csel" id="MS"><option value="group">조별리그</option><option value="16">16강</option><option value="8">8강</option><option value="4">4강</option><option value="final">결승</option><option value="3rd">3,4위</option></select>
+          <select class="csel" id="MS"><option value="group">조별리그</option><option value="32">32강</option><option value="16">16강</option><option value="8">8강</option><option value="4">4강</option><option value="final">결승</option><option value="3rd">3,4위</option></select>
         </div>
         <div><div class="flabel">날짜</div><input class="fi" id="MD" type="date" /></div>
         <div><div class="flabel">시간</div><input class="fi" id="MT" type="time" /></div>
@@ -718,8 +718,8 @@ async function renderHome() {
       const locked = hasResult || kicked;
       const won = hasResult && pred && pred.pred_home === mainMatch.result_home && pred.pred_away === mainMatch.result_away;
       const cd = countdown(mainMatch);
-      const SL={group:'조별리그',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
-      const SC={group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
+      const SL={group:'조별리그',32:'32강',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+      const SC={group:'sg',32:'s16',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
 
       wrap.innerHTML = `
         <div style="background:linear-gradient(135deg,var(--green-d),var(--green));border-radius:var(--r);padding:22px;margin-bottom:16px;color:#fff;">
@@ -976,8 +976,8 @@ async function renderPredict() {
     list.sort((a, b) => (a.match_date||'') > (b.match_date||'') ? 1 : -1);
 
     if (!list.length) { document.getElementById('MG').innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="eicon">⚽</div><p>해당하는 경기가 없습니다</p></div>'; return; }
-    const SC={group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
-    const SL={group:'조별',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+    const SC={group:'sg',32:'s16',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
+    const SL={group:'조별',32:'32강',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
 
     document.getElementById('MG').innerHTML = list.map(m => {
       const pred = allPreds.find(p => p.match_id === m.id);
@@ -1127,8 +1127,8 @@ async function renderHistory() {
       return;
     }
 
-    const SL = {group:'조별리그',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
-    const SC = {group:'sg',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
+    const SL = {group:'조별리그',32:'32강',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+    const SC = {group:'sg',32:'s16',16:'s16',8:'s8',4:'s4',final:'sfinal','3rd':'s3rd'};
 
     el.innerHTML = done.map(m => {
       // 이 경기의 스냅샷 납부자 목록
@@ -1237,7 +1237,7 @@ async function renderAdminMatches() {
   try {
     const matches = await dbGet('matches');
     matches.sort((a,b) => (a.match_date||'') > (b.match_date||'') ? 1 : -1);
-    const SL={group:'조별',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
+    const SL={group:'조별',32:'32강',16:'16강',8:'8강',4:'4강',final:'결승','3rd':'3,4위'};
     if (!matches.length) { document.getElementById('AML').innerHTML = '<div class="empty"><div class="eicon">📋</div><p>경기 없음</p></div>'; return; }
     document.getElementById('AML').innerHTML = matches.map((m, i) => `
       <div class="ami" style="${m.is_main ? 'border:2px solid var(--gold);background:#fffbeb;' : ''}">
