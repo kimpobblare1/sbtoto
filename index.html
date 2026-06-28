@@ -347,6 +347,7 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
   <div class="page act" id="p-home">
     <div id="notice-banner"></div>
     <div id="main-match-wrap"></div>
+    <div id="champion-wrap"></div>
     <div class="sgrid" id="SG"></div>
     <div id="pred-section"></div>
   </div>
@@ -430,6 +431,38 @@ body{font-family:'Segoe UI',-apple-system,sans-serif;background:linear-gradient(
         <div><div class="flabel">시간</div><input class="fi" id="MT" type="time" /></div>
       </div>
       <button class="btn btn-sm" onclick="addMatch()">+ 경기 추가</button>
+    </div>
+    <div class="card">
+      <div class="ctitle">🏆 우승국 맞추기 관리</div>
+      <div style="background:var(--g50);border-radius:var(--r);padding:16px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end;margin-bottom:12px;">
+          <div>
+            <div class="flabel">메인으로 표시할 내용</div>
+            <select class="csel" id="MAIN_TYPE" onchange="toggleMainType()">
+              <option value="match">경기 예측 (기존)</option>
+              <option value="champion">우승국 맞추기</option>
+            </select>
+          </div>
+        </div>
+        <div id="CHAMPION_ADMIN" style="display:none;">
+          <div class="flabel" style="margin-bottom:8px;">우승국 선택 (관리자가 정답 지정)</div>
+          <button class="btn btn-out" id="CHAMP_BTN" onclick="openCM('champion')" style="width:100%;text-align:left;padding:8px 11px;margin-top:0;margin-bottom:10px;">🔍 우승국 선택 (정답)</button>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;">
+            <div>
+              <div class="flabel">예측 마감 날짜</div>
+              <input class="fi" id="CHAMP_DATE" type="date" />
+            </div>
+            <div>
+              <div class="flabel">예측 마감 시간 (KST)</div>
+              <input class="fi" id="CHAMP_TIME" type="time" />
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-sm" onclick="saveChampionSettings()">설정 저장</button>
+          </div>
+          <div id="CHAMP_STATUS" style="margin-top:10px;font-size:13px;color:var(--g500);"></div>
+        </div>
+      </div>
     </div>
     <div class="card"><div class="ctitle">📋 경기 목록 &amp; 결과 입력</div><div id="AML"></div></div>
     <div class="card">
@@ -778,6 +811,14 @@ async function renderHome() {
                </button>
                ${pred ? `<div class="pending-badge" style="margin-top:8px;">현재 예측: ${pred.pred_home} - ${pred.pred_away}</div>` : ''}`}
         </div>`;
+    }
+
+    // 우승국 맞추기 렌더링
+    if (!isAdminUser) {
+      await renderChampion(settings, allUsers);
+    } else {
+      const cw = document.getElementById('champion-wrap');
+      if (cw) cw.innerHTML = '';
     }
 
     // 이월 배너: 납부자에게만 표시
@@ -1230,7 +1271,7 @@ async function renderHistory() {
 
 // ===================== ADMIN =====================
 async function renderAdmin() {
-  await Promise.all([renderAdminMatches(), renderUserList(), renderPayouts()]);
+  await Promise.all([renderAdminMatches(), renderUserList(), renderPayouts(), loadChampionAdmin()]);
 }
 
 async function renderAdminMatches() {
@@ -1426,6 +1467,226 @@ async function changeAdminPw() {
   } catch(e) { toast('오류: ' + e.message, 'e'); }
 }
 
+// ===================== CHAMPION =====================
+async function loadChampionAdmin() {
+  try {
+    const settings = await dbGet('settings');
+    const mainType = settings.find(s => s.key === 'main_type')?.value || 'match';
+    const champDeadlineRaw = settings.find(s => s.key === 'champion_deadline')?.value || '';
+    const champLocked = champDeadlineRaw
+      ? Date.now() >= new Date(champDeadlineRaw).getTime()
+      : settings.find(s => s.key === 'champion_locked')?.value === 'true';
+    const champAnswer = settings.find(s => s.key === 'champion_answer')?.value || '';
+
+    const sel = document.getElementById('MAIN_TYPE');
+    if (sel) sel.value = mainType;
+    toggleMainType();
+
+    // 마감 시간 입력칸 복원
+    if (champDeadlineRaw) {
+      const d = new Date(champDeadlineRaw);
+      const pad = n => String(n).padStart(2,'0');
+      const kst = new Date(d.getTime() + (d.getTimezoneOffset()*60000) + 9*3600000);
+      const dateStr = kst.getFullYear() + '-' + pad(kst.getMonth()+1) + '-' + pad(kst.getDate());
+      const timeStr = pad(kst.getHours()) + ':' + pad(kst.getMinutes());
+      const dateEl = document.getElementById('CHAMP_DATE');
+      const timeEl = document.getElementById('CHAMP_TIME');
+      if (dateEl) dateEl.value = dateStr;
+      if (timeEl) timeEl.value = timeStr;
+    }
+
+    const status = document.getElementById('CHAMP_STATUS');
+    if (status) {
+      const remaining = champDeadlineRaw ? Math.max(0, new Date(champDeadlineRaw).getTime() - Date.now()) : 0;
+      const remText = remaining > 0 ? (() => {
+        const h = Math.floor(remaining/3600000);
+        const m = Math.floor((remaining%3600000)/60000);
+        return h >= 24 ? Math.floor(h/24)+'일 후 마감' : h > 0 ? h+'시간 '+m+'분 후 마감' : m+'분 후 마감';
+      })() : '';
+      if (champLocked) {
+        status.innerHTML = '<span style="color:var(--red);font-weight:600;">⛔ 예측 마감됨</span>';
+      } else {
+        status.innerHTML = '<span style="color:#065f46;font-weight:600;">✅ 예측 진행 중' + (remText ? ' · ⏰ ' + remText : '') + '</span>';
+      }
+    }
+    if (champAnswer) {
+      try {
+        const a = JSON.parse(champAnswer);
+        const btn = document.getElementById('CHAMP_BTN');
+        if (btn) btn.innerHTML = a.f + ' ' + a.n + ' (정답 설정됨)';
+        window._champAnswer = a;
+      } catch(e) {}
+    }
+  } catch(e) {}
+}
+
+function toggleMainType() {
+  const sel = document.getElementById('MAIN_TYPE');
+  const champAdmin = document.getElementById('CHAMPION_ADMIN');
+  if (!sel || !champAdmin) return;
+  champAdmin.style.display = sel.value === 'champion' ? '' : 'none';
+}
+
+async function saveChampionSettings() {
+  try {
+    const mainType = document.getElementById('MAIN_TYPE').value;
+    await dbUpsert('settings', { key: 'main_type', value: mainType }, 'key');
+    if (mainType === 'champion' && window._champAnswer) {
+      await dbUpsert('settings', { key: 'champion_answer', value: JSON.stringify(window._champAnswer) }, 'key');
+    }
+    const date = document.getElementById('CHAMP_DATE').value;
+    const time = document.getElementById('CHAMP_TIME').value;
+    if (date && time) {
+      await dbUpsert('settings', { key: 'champion_deadline', value: date + 'T' + time + '+09:00' }, 'key');
+    }
+    toast('설정 저장 완료!', 's');
+    loadChampionAdmin();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function toggleChampionLock() {
+  try {
+    const settings = await dbGet('settings');
+    const locked = settings.find(s => s.key === 'champion_locked')?.value === 'true';
+    await dbUpsert('settings', { key: 'champion_locked', value: locked ? 'false' : 'true' }, 'key');
+    toast(locked ? '예측이 오픈되었습니다 ✅' : '예측이 마감되었습니다 ⛔', locked ? 's' : 'e');
+    loadChampionAdmin();
+  } catch(e) { toast('오류: ' + e.message, 'e'); }
+}
+
+async function renderChampion(settings, allUsers) {
+  const wrap = document.getElementById('champion-wrap');
+  const matchWrap = document.getElementById('main-match-wrap');
+  const predSection = document.getElementById('pred-section');
+  if (!wrap) return;
+  const mainType = settings.find(s => s.key === 'main_type')?.value || 'match';
+  if (mainType !== 'champion') {
+    wrap.innerHTML = '';
+    if (matchWrap) matchWrap.style.display = '';
+    if (predSection) predSection.style.display = '';
+    return;
+  }
+  // 우승국 모드: 메인경기 숨김
+  if (matchWrap) matchWrap.style.display = 'none';
+  if (predSection) predSection.style.display = 'none';
+
+  const deadlineRaw = settings.find(s => s.key === 'champion_deadline')?.value || '';
+  const locked = deadlineRaw
+    ? Date.now() >= new Date(deadlineRaw).getTime()
+    : settings.find(s => s.key === 'champion_locked')?.value === 'true';
+  const champAnswerRaw = settings.find(s => s.key === 'champion_answer')?.value || '';
+  let champAnswer = null;
+  try { if (champAnswerRaw) champAnswer = JSON.parse(champAnswerRaw); } catch(e) {}
+
+  // 카운트다운
+  const cdText = (() => {
+    if (!deadlineRaw || locked) return '';
+    const diff = new Date(deadlineRaw).getTime() - Date.now();
+    if (diff <= 0) return '';
+    const h = Math.floor(diff/3600000);
+    const m = Math.floor((diff%3600000)/60000);
+    return h >= 24 ? Math.floor(h/24)+'일 후 마감' : h > 0 ? h+'시간 '+m+'분 후 마감' : m+'분 후 마감';
+  })();
+
+  // 내 예측 조회
+  const myPred = await dbGet('champion_predictions', { user_id: CU.id });
+  const myChamp = myPred[0] || null;
+
+  // 전체 예측 조회
+  const allPreds = await dbGet('champion_predictions');
+  const isPaid = allUsers.find(u => u.id === CU.id)?.entry_fee_paid || false;
+
+  // 결과 확인
+  const hasResult = champAnswer !== null;
+  const won = hasResult && myChamp && myChamp.country_name === champAnswer.n;
+
+  wrap.innerHTML = `
+    <div style="background:linear-gradient(135deg,#78350f,#b45309,#d97706);border-radius:var(--r);padding:22px;margin-bottom:16px;color:#fff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+        <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:12px;font-size:12px;font-weight:700;">🏆 우승국 맞추기</span>
+        <span style="font-size:12px;opacity:.75;">${locked ? '⛔ 예측 마감' : '✅ 예측 진행 중'}</span>
+      </div>
+      <div style="text-align:center;padding:16px 0;">
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;">
+          <div style="text-align:center;">
+            <div style="font-size:56px;">${hasResult ? champAnswer.f : '🌍'}</div>
+            <div style="font-size:12px;opacity:.7;margin-top:4px;">${hasResult ? champAnswer.n : '우승국'}</div>
+          </div>
+          ${myChamp ? `
+          <div style="font-size:22px;opacity:.5;">vs</div>
+          <div style="text-align:center;">
+            <div style="font-size:56px;">${myChamp.country_flag}</div>
+            <div style="font-size:12px;opacity:.7;margin-top:4px;">내 예측</div>
+            <div style="font-size:11px;opacity:.6;">${myChamp.country_name}</div>
+          </div>` : ''}
+        </div>
+        ${cdText ? `<div style="margin-top:8px;font-size:12px;color:#fcd34d;font-weight:600;">⏰ ${cdText}</div>` : ''}
+        <div style="font-size:14px;font-weight:700;margin-top:8px;">${hasResult ? '정답 공개됨' : '우승국을 맞혀보세요!'}</div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      ${hasResult
+        ? won
+          ? `<div class="won-badge" style="font-size:16px;padding:14px;">🏆 정확히 맞혔습니다! ${champAnswer.f} ${champAnswer.n}</div>`
+          : `<div class="lost-badge" style="font-size:13px;padding:12px;">${myChamp ? '내 예측: ' + myChamp.country_flag + ' ' + myChamp.country_name + ' · 아쉽게 빗나갔어요 😢' : '예측을 하지 않았습니다'}</div>`
+        : locked
+        ? `<div style="text-align:center;padding:14px;background:#fee2e2;border-radius:10px;font-size:14px;font-weight:700;color:#991b1b;">⛔ 예측이 마감되었습니다</div>
+           ${myChamp ? '<div class="pending-badge" style="margin-top:8px;">내 예측: ' + myChamp.country_flag + ' ' + myChamp.country_name + '</div>' : ''}`
+        : `<div style="font-size:13px;color:var(--g500);margin-bottom:12px;text-align:center;">
+             16강 시작전까지 우승국을 정확히 맞히면 <strong style="color:var(--green-l);">🏆 당첨!</strong><br>당첨자끼리 판돈을 1/n으로 나눠가집니다
+           </div>
+           <div style="margin-bottom:12px;">
+             <button class="btn btn-out" id="CHAMP_PRED_BTN" onclick="openCM('champ_pred')" style="width:100%;text-align:left;padding:10px 14px;margin-top:0;font-size:14px;">
+               ${myChamp ? myChamp.country_flag + ' ' + myChamp.country_name + ' (변경하기)' : '🔍 우승국 선택하기'}
+             </button>
+           </div>
+           <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:9px 12px;font-size:12px;color:#166534;line-height:1.6;">
+             📌 관리자가 마감하기 전까지 자유롭게 변경 가능합니다.
+           </div>`}
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:13px;">
+        <div class="ctitle" style="margin-bottom:0;">👀 전체 예측 현황 <span style="font-size:13px;font-weight:400;color:var(--g500);">${allPreds.length}명 참여</span></div>
+      </div>
+      ${allPreds.length ? `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="background:var(--green-d);">
+          <th style="padding:9px 12px;text-align:left;color:#fff;font-size:12px;border-radius:8px 0 0 0;">참가자</th>
+          <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;">예측 우승국</th>
+          <th style="padding:9px 12px;text-align:center;color:#fff;font-size:12px;border-radius:0 8px 0 0;">결과</th>
+        </tr></thead>
+        <tbody>${allPreds.map((p, i) => {
+          const u = allUsers.find(u => u.id === p.user_id);
+          const isMe = p.user_id === CU.id;
+          const w = hasResult && p.country_name === champAnswer.n;
+          return '<tr style="' + (isMe ? 'background:#f0fdf4;font-weight:700;' : i%2===1 ? 'background:var(--g50);' : '') + '">' +
+            '<td style="padding:9px 12px;font-size:13px;border-bottom:1px solid var(--g100);">' + (isMe?'⭐ ':'') + (u?u.name:'?') + '</td>' +
+            '<td style="padding:9px 12px;text-align:center;font-size:14px;border-bottom:1px solid var(--g100);">' + p.country_flag + ' ' + p.country_name + '</td>' +
+            '<td style="padding:9px 12px;text-align:center;border-bottom:1px solid var(--g100);">' +
+            (hasResult ? (w ? '<span style="background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">🏆 적중</span>' : '<span style="background:var(--red-l);color:var(--red);padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;">✗ 실패</span>') : '<span style="color:var(--g400);font-size:12px;">대기중</span>') +
+            '</td></tr>';
+        }).join('')}</tbody>
+      </table></div>` : '<div style="text-align:center;padding:20px;color:var(--g400);font-size:13px;">아직 예측한 사람이 없습니다</div>'}
+    </div>`;
+
+  // 국가 선택 모달 연결 (champ_pred)
+  window._champPredTarget = true;
+}
+
+async function saveChampionPred(n, f) {
+  if (CU.id === 'admin') return toast('관리자는 예측할 수 없습니다', 'e');
+  try {
+    const settings = await dbGet('settings');
+    const deadlineRaw = settings.find(s => s.key === 'champion_deadline')?.value || '';
+    const locked = deadlineRaw
+      ? Date.now() >= new Date(deadlineRaw).getTime()
+      : settings.find(s => s.key === 'champion_locked')?.value === 'true';
+    if (locked) return toast('예측이 마감되었습니다 ⛔', 'e');
+    await dbUpsert('champion_predictions', { user_id: CU.id, country_name: n, country_flag: f }, 'user_id');
+    toast('우승국 예측 저장! 🏆', 's');
+    renderHome();
+  } catch(e) { toast('저장 실패: ' + e.message, 'e'); }
+}
+
 // ===================== COUNTRY MODAL =====================
 function openCM(t) { CMT=t; document.getElementById('CM').classList.add('open'); document.getElementById('CS').value=''; renderCG(COUNTRIES); setTimeout(()=>document.getElementById('CS').focus(),80); }
 function closeCM() { document.getElementById('CM').classList.remove('open'); }
@@ -1433,7 +1694,13 @@ function filterC() { const q=document.getElementById('CS').value.toLowerCase(); 
 function renderCG(list) { document.getElementById('CG').innerHTML=list.map(c=>`<div class="ci" onclick="selC('${c.n}','${c.f}')"><span style="font-size:19px;">${c.f}</span><span>${c.n}</span></div>`).join(''); }
 function selC(n,f) {
   if (CMT==='home') { SH={n,f}; document.getElementById('HTB').innerHTML=f+' '+n; }
-  else { SA={n,f}; document.getElementById('ATB').innerHTML=f+' '+n; }
+  else if (CMT==='away') { SA={n,f}; document.getElementById('ATB').innerHTML=f+' '+n; }
+  else if (CMT==='champion') {
+    window._champAnswer = {n,f};
+    document.getElementById('CHAMP_BTN').innerHTML=f+' '+n;
+  } else if (CMT==='champ_pred') {
+    saveChampionPred(n, f);
+  }
   closeCM();
 }
 document.getElementById('CM').addEventListener('click', e => { if (e.target===document.getElementById('CM')) closeCM(); });
